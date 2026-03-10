@@ -26,6 +26,29 @@ class IsMainAdmin(permissions.BasePermission):
         return is_admin_user(request.user)
 
 
+class CustomerRegisterView(generics.CreateAPIView):
+    """Customer registration endpoint"""
+    queryset = User.objects.all()
+    permission_classes = (permissions.AllowAny,)
+    
+    def get_serializer_class(self):
+        return CustomerRegisterSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        
+        # Return user data without sensitive information
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'role': user.role,
+            'message': 'Customer account created successfully'
+        }, status=status.HTTP_201_CREATED)
+
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)

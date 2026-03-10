@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, ShoppingBag, Sparkles, Shield, Truck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import api from "@/lib/api";
 
 const floatingItems = [
   { icon: ShoppingBag, delay: 0, x: "10%", y: "20%" },
@@ -63,11 +64,27 @@ const Auth = () => {
           navigate("/account");
         }
       } else {
-        // For signup, you'll need to implement registration
-        alert("Registration not yet implemented");
+        // Customer registration
+        const response = await api.post("/auth/customer/register/", {
+          email: email,
+          password: password,
+          username: email.split('@')[0], // Use email prefix as username
+          customer_profile: {
+            first_name: name.split(' ')[0] || '',
+            last_name: name.split(' ').slice(1).join(' ') || ''
+          }
+        });
+        
+        // Auto-login after successful registration
+        await login(email, password);
+        navigate("/account");
       }
-    } catch (error) {
-      alert("Login failed. Please check your credentials.");
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.detail || 
+                          error?.response?.data?.email?.[0] ||
+                          error?.response?.data?.password?.[0] ||
+                          (mode === "login" ? "Login failed. Please check your credentials." : "Registration failed. Please try again.");
+      alert(errorMessage);
     }
   };
 

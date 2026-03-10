@@ -68,6 +68,57 @@ class UserSerializer(serializers.ModelSerializer):
         return 5 if obj.role == "Seller" else None
 
 
+class CustomerRegisterSerializer(serializers.ModelSerializer):
+    """Serializer for customer registration"""
+    password = serializers.CharField(write_only=True, min_length=8)
+    username = serializers.CharField(required=False, allow_blank=True)
+    customer_profile = CustomerProfileSerializer(required=False)
+
+    class Meta:
+        model = User
+        fields = [
+            "username",
+            "email",
+            "password",
+            "customer_profile",
+        ]
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+
+    def create(self, validated_data):
+        customer_profile_data = validated_data.pop('customer_profile', {})
+        username = validated_data.pop('username', '').strip()
+        email = validated_data['email']
+        
+        # Generate username from email if not provided
+        if not username:
+            username = email.split('@')[0]
+            # Ensure username is unique
+            counter = 1
+            original_username = username
+            while User.objects.filter(username=username).exists():
+                username = f"{original_username}{counter}"
+                counter += 1
+
+        # Create user with Customer role
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=validated_data['password'],
+            role='Customer',
+        )
+
+        # Create customer profile if data provided
+        if customer_profile_data:
+            from .models import CustomerProfile
+            CustomerProfile.objects.create(user=user, **customer_profile_data)
+
+        return user
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     username = serializers.CharField(required=False, allow_blank=True)
