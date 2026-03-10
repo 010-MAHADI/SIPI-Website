@@ -56,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     useEffect(() => {
         const initAuth = async () => {
-            const token = localStorage.getItem('access_token');
+            const token = localStorage.getItem('token') || localStorage.getItem('access_token');
             if (token) {
                 try {
                     const profile = await fetchProfileWithRetry();
@@ -65,6 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     console.error("Failed to fetch profile during auth init:", error);
                     const status = error?.response?.status;
                     if (status === 401 || status === 403) {
+                        localStorage.removeItem('token');
                         localStorage.removeItem('access_token');
                         localStorage.removeItem('refresh_token');
                     }
@@ -77,7 +78,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     const login = async (tokens: { access: string; refresh?: string }) => {
-        localStorage.setItem('access_token', tokens.access);
+        localStorage.setItem('token', tokens.access);  // Store as 'token' to match API interceptor
+        localStorage.setItem('access_token', tokens.access);  // Also store as 'access_token' for compatibility
         if (tokens.refresh) {
             localStorage.setItem('refresh_token', tokens.refresh);
         }
@@ -88,6 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const logout = () => {
+        localStorage.removeItem('token');
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         setUser(null);
