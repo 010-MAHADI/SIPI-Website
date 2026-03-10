@@ -68,6 +68,21 @@ class UserSerializer(serializers.ModelSerializer):
         return 5 if obj.role == "Seller" else None
 
 
+class CustomerProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        from .models import CustomerProfile
+        model = CustomerProfile
+        fields = [
+            'first_name',
+            'last_name',
+            'phone',
+            'profile_photo',
+            'email_notifications',
+            'language',
+            'currency',
+        ]
+
+
 class CustomerRegisterSerializer(serializers.ModelSerializer):
     """Serializer for customer registration"""
     password = serializers.CharField(write_only=True, min_length=8)
@@ -298,21 +313,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             ensure_admin_shop(user)
 
         return data
-
-
-class CustomerProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        from .models import CustomerProfile
-        model = CustomerProfile
-        fields = [
-            'first_name',
-            'last_name',
-            'phone',
-            'profile_photo',
-            'email_notifications',
-            'language',
-            'currency',
-        ]
 
 
 class AddressSerializer(serializers.ModelSerializer):
