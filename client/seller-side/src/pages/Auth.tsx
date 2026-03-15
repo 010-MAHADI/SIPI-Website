@@ -97,9 +97,7 @@ export default function Auth() {
     }
   };
 
-  const handleGoogleSignIn = () => {
-    toast.error("Google sign-in is not configured yet.");
-  };
+
 
   return (
     <div className="min-h-screen flex">
@@ -146,24 +144,7 @@ export default function Auth() {
             </p>
           </div>
 
-          {mode !== "forgot" && (
-            <>
-              <Button
-                variant="outline"
-                className="w-full h-11 rounded-xl font-medium gap-3 border-border hover:bg-muted/50 transition-colors"
-                onClick={handleGoogleSignIn}
-                disabled={loading}
-              >
-                Continue with Google
-              </Button>
-              <div className="relative">
-                <Separator />
-                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-3 text-xs text-muted-foreground">
-                  or continue with email
-                </span>
-              </div>
-            </>
-          )}
+
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
