@@ -1,14 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
-from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from products.serializers import ShopSerializer
 
 from .models import SellerProfile
 from .roles import is_admin_user
-from .services import ensure_admin_shop
+from .services import assert_user_can_authenticate
 
 User = get_user_model()
 
@@ -299,25 +298,7 @@ class SellerRequestReviewSerializer(serializers.Serializer):
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
-        user = self.user
-
-        if user.role == "Seller":
-            profile = getattr(user, "seller_profile", None)
-            if not profile:
-                raise AuthenticationFailed("Seller profile not found.")
-
-            if profile.status == "pending":
-                raise AuthenticationFailed("Your seller request is pending admin approval.")
-            if profile.status == "rejected":
-                raise AuthenticationFailed("Your seller request was rejected by admin.")
-            if profile.status == "suspended":
-                raise AuthenticationFailed("Your seller account is suspended.")
-            if profile.status != "active":
-                raise AuthenticationFailed("Your seller account is not active.")
-
-        if is_admin_user(user):
-            ensure_admin_shop(user)
-
+        assert_user_can_authenticate(self.user)
         return data
 
 
@@ -374,4 +355,3 @@ class CustomerUserSerializer(serializers.ModelSerializer):
             profile.save()
 
         return instance
-

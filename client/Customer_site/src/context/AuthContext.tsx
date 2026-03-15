@@ -25,6 +25,7 @@ interface AuthContextType {
   userName: string;
   profilePhoto: string;
   login: (email: string, password: string) => Promise<void>;
+  completeSocialLogin: (accessToken: string, refreshToken: string) => Promise<void>;
   logout: () => void;
   setProfilePhoto: (photo: string) => Promise<void>;
   updateProfile: (data: Partial<CustomerProfile>) => Promise<void>;
@@ -37,6 +38,7 @@ const AuthContext = createContext<AuthContextType>({
   userName: "",
   profilePhoto: "",
   login: async () => {},
+  completeSocialLogin: async () => {},
   logout: () => {},
   setProfilePhoto: async () => {},
   updateProfile: async () => {},
@@ -72,14 +74,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await api.post("/auth/token/", { email, password });
       const { access, refresh } = response.data;
       
-      localStorage.setItem("access_token", access);
-      localStorage.setItem("refresh_token", refresh);
-      
-      await fetchUserProfile();
+      await completeSocialLogin(access, refresh);
     } catch (error) {
       console.error("Login failed:", error);
       throw error;
     }
+  };
+
+  const completeSocialLogin = async (accessToken: string, refreshToken: string) => {
+    localStorage.setItem("access_token", accessToken);
+    localStorage.setItem("refresh_token", refreshToken);
+    await fetchUserProfile();
   };
 
   const logout = () => {
@@ -126,6 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       userName, 
       profilePhoto, 
       login, 
+      completeSocialLogin,
       logout, 
       setProfilePhoto,
       updateProfile,
