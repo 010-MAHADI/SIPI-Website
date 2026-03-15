@@ -10,13 +10,14 @@ export interface Product {
 }
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://52.221.195.134/api/';
-const backendOrigin = apiBaseUrl.replace(/\/api\/?$/, '');
+const mediaBaseUrl = import.meta.env.VITE_MEDIA_URL || 'http://52.221.195.134/media';
 
 const normalizeMediaUrl = (url: string | null | undefined): string | null => {
     if (!url) return null;
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    if (url.startsWith('/')) return `${backendOrigin}${url}`;
-    return `${backendOrigin}/${url}`;
+    if (url.startsWith('/media/')) return `${mediaBaseUrl.replace('/media', '')}${url}`;
+    if (url.startsWith('/')) return `${mediaBaseUrl}${url}`;
+    return `${mediaBaseUrl}/${url}`;
 };
 
 export const useProducts = () => {

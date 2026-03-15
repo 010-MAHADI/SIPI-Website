@@ -40,13 +40,14 @@ export interface Product {
 }
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://52.221.195.134/api/';
-const backendOrigin = apiBaseUrl.replace(/\/api\/?$/, '');
+const mediaBaseUrl = import.meta.env.VITE_MEDIA_URL || 'http://52.221.195.134/media';
 
 const normalizeImageUrl = (image: string | null | undefined): string => {
     if (!image) return '/placeholder.svg';
     if (image.startsWith('http://') || image.startsWith('https://')) return image;
-    if (image.startsWith('/')) return `${backendOrigin}${image}`;
-    return `${backendOrigin}/${image}`;
+    if (image.startsWith('/media/')) return `${mediaBaseUrl.replace('/media', '')}${image}`;
+    if (image.startsWith('/')) return `${mediaBaseUrl}${image}`;
+    return `${mediaBaseUrl}/${image}`;
 };
 
 const normalizeProduct = (p: any): Product => ({
