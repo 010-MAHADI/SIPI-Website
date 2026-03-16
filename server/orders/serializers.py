@@ -62,7 +62,7 @@ class OrderItemCreateSerializer(serializers.Serializer):
 class OrderSerializer(serializers.ModelSerializer):
     items = serializers.SerializerMethodField()
     customer_email = serializers.EmailField(source='customer.email', read_only=True)
-    customer_name = serializers.CharField(source='customer.username', read_only=True)
+    customer_name = serializers.SerializerMethodField()  # Use shipping_full_name instead of username
     subtotal = serializers.SerializerMethodField()
     total_amount = serializers.SerializerMethodField()
 
@@ -77,6 +77,10 @@ class OrderSerializer(serializers.ModelSerializer):
             'status', 'created_at', 'updated_at', 'items'
         ]
         read_only_fields = ['id', 'order_id', 'customer', 'created_at', 'updated_at']
+
+    def get_customer_name(self, obj):
+        """Return the full name from shipping address instead of username"""
+        return obj.shipping_full_name or (obj.customer.username if obj.customer else "Guest")
 
     def _request_user(self):
         request = self.context.get('request')

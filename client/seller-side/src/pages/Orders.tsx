@@ -759,9 +759,8 @@ export default function Orders() {
               </div>
               <Separator className="my-2" />
               <div className="space-y-2.5 text-sm max-w-xs ml-auto">
-                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="font-medium">${(selectedOrder.amount * 0.9).toFixed(2)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="font-medium">${(selectedOrder.amount - (selectedOrder.amount * 0.05)).toFixed(2)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span className="font-medium">${(selectedOrder.amount * 0.05).toFixed(2)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span className="font-medium">${(selectedOrder.amount * 0.05).toFixed(2)}</span></div>
                 <Separator />
                 <div className="flex justify-between font-bold text-base pt-1"><span>Total</span><span className="text-primary">${selectedOrder.amount.toFixed(2)}</span></div>
               </div>
@@ -791,6 +790,7 @@ export default function Orders() {
                 <h2 className="section-title flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> Shipping Address</h2>
                 <div className="text-sm space-y-0.5 bg-muted/30 rounded-lg p-3 border border-border/40">
                   <p className="font-medium">{selectedOrder.customer}</p>
+                  <p className="text-muted-foreground">{selectedOrder.phone}</p>
                   <p className="text-muted-foreground">{selectedOrder.address.street}</p>
                   <p className="text-muted-foreground">{selectedOrder.address.city}, {selectedOrder.address.state} {selectedOrder.address.zip}</p>
                   <p className="text-muted-foreground">{selectedOrder.address.country}</p>
