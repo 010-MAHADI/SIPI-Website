@@ -178,138 +178,167 @@ class OrderCreateSerializer(serializers.Serializer):
         from seller.models import Coupon
         from decimal import Decimal
         import uuid
+        import logging
         
-        items_data = validated_data.pop('items')
-        customer = self.context['request'].user
+        logger = logging.getLogger(__name__)
         
-        # Generate unique order ID
-        order_id = f"FP{uuid.uuid4().hex[:10].upper()}"
-        
-        # Calculate totals (use Decimal for all monetary values)
-        subtotal = Decimal('0')
-        shipping_cost = Decimal('0')
-        order_items = []
-        
-        for item_data in items_data:
-            product = Product.objects.get(id=item_data['product_id'])
-            price = Decimal(str(product.price))
-            quantity = item_data['quantity']
-            subtotal += price * quantity
+        try:
+            items_data = validated_data.pop('items')
+            customer = self.context['request'].user
             
-            # Calculate shipping for this product
-            if not product.freeShipping:
-                # Get shipping options from variants
-                variants = product.variants or {}
-                shipping_options = variants.get('shippingOptions', [])
+            # Generate unique order ID
+            order_id = f"FP{uuid.uuid4().hex[:10].upper()}"
+            
+            # Calculate totals (use Decimal for all monetary values)
+            subtotal = Decimal('0')
+            shipping_cost = Decimal('0')
+            order_items = []
+            
+            for item_data in items_data:
+                try:
+                    product = Product.objects.get(id=item_data['product_id'])
+                except Product.DoesNotExist:
+                    raise serializers.ValidationError(f"Product with ID {item_data['product_id']} not found.")
                 
-                if shipping_options:
-                    # Find first enabled shipping option
-                    enabled_option = next((opt for opt in shipping_options if opt.get('enabled')), None)
-                    if enabled_option:
-                        item_shipping = Decimal(str(enabled_option.get('price', 0)))
-                        shipping_cost += item_shipping * quantity
-            
-            order_items.append({
-                'product': product,
-                'product_title': product.title,
-                'product_image': product.image.name if product.image else '',
-                'color': item_data.get('color', ''),
-                'size': item_data.get('size', ''),
-                'quantity': quantity,
-                'price': price,
-            })
-        
-        # Apply coupon if provided
-        discount = Decimal('0')
-        coupon_code = validated_data.get('coupon_code', '').strip().upper()
-        if coupon_code:
-            try:
-                # Find valid coupon
-                coupon = Coupon.objects.get(
-                    code=coupon_code,
-                    is_active=True,
-                    expires_at__gte=timezone.now().date()
-                )
+                price = Decimal(str(product.price))
+                quantity = item_data['quantity']
+                subtotal += price * quantity
                 
-                # Check if coupon has uses left
-                if coupon.uses >= coupon.max_uses:
-                    pass  # Coupon used up, no discount
-                elif subtotal < coupon.min_order_amount:
-                    pass  # Order doesn't meet minimum amount
-                else:
-                    # Check coupon type eligibility
-                    is_eligible = False
+                # Calculate shipping for this product
+                if not product.freeShipping:
+                    # Get shipping options from variants
+                    variants = product.variants or {}
+                    shipping_options = variants.get('shippingOptions', [])
                     
-                    if coupon.coupon_type == 'all_products':
-                        is_eligible = True
-                    elif coupon.coupon_type == 'first_order':
-                        # Check if this is customer's first order
-                        previous_orders = Order.objects.filter(customer=customer).count()
-                        is_eligible = previous_orders == 0
-                    elif coupon.coupon_type == 'category':
-                        # Check if any product in order belongs to coupon category
-                        if coupon.category:
-                            for item_data in order_items:
-                                product = item_data['product']
-                                # Check both category_fk (preferred) and category string
-                                if (product.category_fk == coupon.category or 
-                                    (product.category and product.category.lower() == coupon.category.name.lower())):
-                                    is_eligible = True
-                                    break
-                    elif coupon.coupon_type == 'specific_products':
-                        # Check if any product in order is in coupon's specific products
-                        coupon_product_ids = set(coupon.coupon_products.values_list('product_id', flat=True))
-                        order_product_ids = set(item_data['product'].id for item_data in order_items)
-                        is_eligible = bool(coupon_product_ids.intersection(order_product_ids))
-                    
-                    if is_eligible:
-                        if coupon.discount_type == 'percent':
-                            discount = (subtotal * coupon.discount_value / Decimal('100')).quantize(Decimal('0.01'))
-                        elif coupon.discount_type == 'fixed':
-                            discount = min(coupon.discount_value, subtotal)  # Don't exceed order total
-                        elif coupon.discount_type == 'shipping':
-                            discount = shipping_cost
-                        
-                        # Update coupon usage
-                        coupon.uses += 1
-                        coupon.save(update_fields=['uses'])
-                        
-            except Coupon.DoesNotExist:
-                pass  # Invalid coupon code, no discount
-        
-        total_amount = max(Decimal('0'), subtotal + shipping_cost - discount)
-        
-        # Create order
-        order = Order.objects.create(
-            customer=customer,
-            order_id=order_id,
-            shipping_full_name=validated_data['shipping_full_name'],
-            shipping_phone=validated_data['shipping_phone'],
-            shipping_street=validated_data['shipping_street'],
-            shipping_city=validated_data['shipping_city'],
-            shipping_state=validated_data.get('shipping_state', ''),
-            shipping_zip_code=validated_data.get('shipping_zip_code', ''),
-            shipping_country=validated_data.get('shipping_country', 'Bangladesh'),
-            payment_method=validated_data['payment_method'],
-            payment_status='pending',
-            subtotal=subtotal,
-            shipping_cost=shipping_cost,
-            discount=discount,
-            coupon_code=coupon_code if discount > 0 else None,
-            total_amount=total_amount,
-            status='pending',
-        )
-        
-        # Create order items and update product sold_count
-        for item_data in order_items:
-            OrderItem.objects.create(order=order, **item_data)
+                    if shipping_options:
+                        # Find first enabled shipping option
+                        enabled_option = next((opt for opt in shipping_options if opt.get('enabled')), None)
+                        if enabled_option:
+                            item_shipping = Decimal(str(enabled_option.get('price', 0)))
+                            shipping_cost += item_shipping * quantity
+                
+                order_items.append({
+                    'product': product,
+                    'product_title': product.title,
+                    'product_image': product.image.name if product.image else '',
+                    'color': item_data.get('color', ''),
+                    'size': item_data.get('size', ''),
+                    'quantity': quantity,
+                    'price': price,
+                })
             
-            # Update product sold_count
-            product = item_data['product']
-            product.sold_count += item_data['quantity']
-            product.save(update_fields=['sold_count'])
-        
-        return order
+            # Apply coupon if provided
+            discount = Decimal('0')
+            coupon_code = validated_data.get('coupon_code', '').strip().upper()
+            if coupon_code:
+                try:
+                    # Find valid coupon
+                    coupon = Coupon.objects.get(
+                        code=coupon_code,
+                        is_active=True,
+                        expires_at__gte=timezone.now().date()
+                    )
+                    
+                    # Check if coupon has uses left
+                    if coupon.uses >= coupon.max_uses:
+                        pass  # Coupon used up, no discount
+                    elif subtotal < coupon.min_order_amount:
+                        pass  # Order doesn't meet minimum amount
+                    else:
+                        # Check coupon type eligibility
+                        is_eligible = False
+                        
+                        if coupon.coupon_type == 'all_products':
+                            is_eligible = True
+                        elif coupon.coupon_type == 'first_order':
+                            # Check if this is customer's first order
+                            previous_orders = Order.objects.filter(customer=customer).count()
+                            is_eligible = previous_orders == 0
+                        elif coupon.coupon_type == 'category':
+                            # Check if any product in order belongs to coupon category
+                            if coupon.category:
+                                for item_data in order_items:
+                                    product = item_data['product']
+                                    # Check both category_fk (preferred) and category string
+                                    try:
+                                        if (product.category_fk == coupon.category or 
+                                            (product.category and hasattr(coupon.category, 'name') and 
+                                             product.category.lower() == coupon.category.name.lower())):
+                                            is_eligible = True
+                                            break
+                                    except (AttributeError, TypeError) as e:
+                                        logger.warning(f"Category comparison error for coupon {coupon_code}: {e}")
+                                        continue
+                        elif coupon.coupon_type == 'specific_products':
+                            # Check if any product in order is in coupon's specific products
+                            try:
+                                coupon_product_ids = set(coupon.coupon_products.values_list('product_id', flat=True))
+                                order_product_ids = set(item_data['product'].id for item_data in order_items)
+                                is_eligible = bool(coupon_product_ids.intersection(order_product_ids))
+                            except Exception as e:
+                                logger.warning(f"Specific products coupon check error for {coupon_code}: {e}")
+                                is_eligible = False
+                        
+                        if is_eligible:
+                            if coupon.discount_type == 'percent':
+                                discount = (subtotal * coupon.discount_value / Decimal('100')).quantize(Decimal('0.01'))
+                            elif coupon.discount_type == 'fixed':
+                                discount = min(coupon.discount_value, subtotal)  # Don't exceed order total
+                            elif coupon.discount_type == 'shipping':
+                                discount = shipping_cost
+                            
+                            # Update coupon usage
+                            coupon.uses += 1
+                            coupon.save(update_fields=['uses'])
+                            
+                except Coupon.DoesNotExist:
+                    pass  # Invalid coupon code, no discount
+                except Exception as e:
+                    logger.error(f"Coupon processing error for {coupon_code}: {e}")
+                    # Continue without coupon discount rather than failing the order
+                    pass
+            
+            total_amount = max(Decimal('0'), subtotal + shipping_cost - discount)
+            
+            # Create order
+            order = Order.objects.create(
+                customer=customer,
+                order_id=order_id,
+                shipping_full_name=validated_data['shipping_full_name'],
+                shipping_phone=validated_data['shipping_phone'],
+                shipping_street=validated_data['shipping_street'],
+                shipping_city=validated_data['shipping_city'],
+                shipping_state=validated_data.get('shipping_state', ''),
+                shipping_zip_code=validated_data.get('shipping_zip_code', ''),
+                shipping_country=validated_data.get('shipping_country', 'Bangladesh'),
+                payment_method=validated_data['payment_method'],
+                payment_status='pending',
+                subtotal=subtotal,
+                shipping_cost=shipping_cost,
+                discount=discount,
+                coupon_code=coupon_code if discount > 0 else None,
+                total_amount=total_amount,
+                status='pending',
+            )
+            
+            # Create order items and update product sold_count
+            for item_data in order_items:
+                OrderItem.objects.create(order=order, **item_data)
+                
+                # Update product sold_count
+                try:
+                    product = item_data['product']
+                    product.sold_count += item_data['quantity']
+                    product.save(update_fields=['sold_count'])
+                except Exception as e:
+                    logger.warning(f"Failed to update sold_count for product {product.id}: {e}")
+                    # Continue without updating sold_count rather than failing the order
+            
+            return order
+            
+        except Exception as e:
+            logger.error(f"Order creation failed: {e}")
+            raise
 
 
 class ReturnItemSerializer(serializers.ModelSerializer):

@@ -303,7 +303,36 @@ const Checkout = () => {
       });
     } catch (error: any) {
       console.error('Order creation failed:', error);
-      const errorMsg = error.response?.data?.detail || error.response?.data?.payment_method?.[0] || 'Failed to place order. Please try again.';
+      
+      // Better error message extraction
+      let errorMsg = 'Failed to place order. Please try again.';
+      
+      if (error.response?.data) {
+        const data = error.response.data;
+        
+        // Check for specific field errors
+        if (data.payment_method && Array.isArray(data.payment_method)) {
+          errorMsg = data.payment_method[0];
+        } else if (data.items && Array.isArray(data.items)) {
+          errorMsg = data.items[0];
+        } else if (data.detail) {
+          errorMsg = data.detail;
+        } else if (data.error) {
+          errorMsg = data.error;
+        } else if (typeof data === 'string') {
+          errorMsg = data;
+        } else if (data.non_field_errors && Array.isArray(data.non_field_errors)) {
+          errorMsg = data.non_field_errors[0];
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+      
+      // If it's a 500 error, provide more helpful message
+      if (error.response?.status === 500) {
+        errorMsg = 'Server error occurred. Your order may have been created. Please check your orders page or contact support.';
+      }
+      
       toast({ 
         title: "Order failed", 
         description: errorMsg, 

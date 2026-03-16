@@ -45,36 +45,59 @@ export const useOrders = (shopId?: string) => {
         queryFn: async (): Promise<Order[]> => {
             try {
                 const params = shopId ? { shop: shopId } : {};
+                console.log('Fetching orders with params:', params);
+                
                 const response = await api.get('/orders/orders/', { params });
+                console.log('Orders API response:', response);
+                
                 const data = response.data?.results ?? response.data;
+                console.log('Raw orders data:', { data, shopId, params });
 
                 if (!Array.isArray(data)) {
+                    console.warn('Orders data is not an array:', data);
                     return [];
                 }
 
-                return data.map((order: any) => ({
-                    id: String(order.order_id ?? order.id ?? ""),
-                    customer_name: order.customer_name || "Guest",
-                    customer_email: order.customer_email || "",
-                    shipping_phone: order.shipping_phone || "",
-                    shipping_street: order.shipping_street || "",
-                    shipping_city: order.shipping_city || "",
-                    shipping_state: order.shipping_state || "",
-                    shipping_zip_code: order.shipping_zip_code || "",
-                    shipping_country: order.shipping_country || "",
-                    date: new Date(order.created_at).toLocaleDateString(),
-                    status: mapStatus(order.status),
-                    payment_status: order.payment_status || "pending",
-                    total: parseFloat(order.total_amount),
-                    paymentMethod: order.payment_method || "Unknown",
-                    items: Array.isArray(order.items) ? order.items : [],
-                }));
+                const mappedOrders = data.map((order: any) => {
+                    console.log('Mapping order:', { 
+                        order_id: order.order_id, 
+                        id: order.id, 
+                        items_count: order.items?.length,
+                        total_amount: order.total_amount 
+                    });
+                    
+                    return {
+                        id: String(order.order_id ?? order.id ?? ""),
+                        customer_name: order.customer_name || "Guest",
+                        customer_email: order.customer_email || "",
+                        shipping_phone: order.shipping_phone || "",
+                        shipping_street: order.shipping_street || "",
+                        shipping_city: order.shipping_city || "",
+                        shipping_state: order.shipping_state || "",
+                        shipping_zip_code: order.shipping_zip_code || "",
+                        shipping_country: order.shipping_country || "",
+                        date: new Date(order.created_at).toLocaleDateString(),
+                        status: mapStatus(order.status),
+                        payment_status: order.payment_status || "pending",
+                        total: parseFloat(order.total_amount) || 0,
+                        paymentMethod: order.payment_method || "Unknown",
+                        items: Array.isArray(order.items) ? order.items : [],
+                    };
+                });
+
+                console.log('Mapped orders:', mappedOrders.length, mappedOrders);
+                return mappedOrders;
             } catch (err) {
                 console.error("Failed to fetch orders", err);
+                if (err.response) {
+                    console.error("Error response:", err.response.status, err.response.data);
+                }
                 return [];
             }
         },
-        enabled: !!shopId,
+        enabled: true,  // Always enable for sellers
+        staleTime: 30000, // 30 seconds
+        refetchOnWindowFocus: false,
     });
 };
 
