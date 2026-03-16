@@ -36,13 +36,14 @@ export function getProductCategorySlug(product: ProductUrlSource): string {
 }
 
 /**
- * Generate a product URL with category and product slug
+ * Generate a product URL with category and product slug, including ID for uniqueness
  */
 export function generateProductUrl(product: ProductUrlSource): string {
   const productSlug = getProductSlug(product);
   const categorySlug = getProductCategorySlug(product);
 
-  return `/${categorySlug}/${productSlug}`;
+  // Include product ID in the slug to ensure uniqueness
+  return `/${categorySlug}/${productSlug}-${product.id}`;
 }
 
 /**
