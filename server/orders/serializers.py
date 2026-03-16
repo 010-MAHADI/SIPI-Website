@@ -370,10 +370,202 @@ class OrderCreateSerializer(serializers.Serializer):
                     logger.warning(f"Failed to update sold_count for product {product.id}: {e}")
                     # Continue without updating sold_count rather than failing the order
             
+            # Send email notifications
+            try:
+                self._send_order_notifications(order)
+            except Exception as e:
+                logger.error(f"Failed to send order notifications for order {order.order_id}: {e}")
+                # Continue without failing the order creation
+            
             return order
             
         except Exception as e:
             logger.error(f"Order creation failed: {e}")
+            raise
+    
+    def _send_order_notifications(self, order):
+        """Send email notifications for new order"""
+        import logging
+        from django.conf import settings
+        from django.template.loader import render_to_string
+        from django.core.mail import send_mail
+        from django.utils import timezone
+        
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # Send order confirmation to customer
+            self._send_customer_confirmation(order)
+            
+            # Send new order notification to sellers
+            self._send_seller_notifications(order)
+            
+        except Exception as e:
+            logger.error(f"Failed to send order notifications: {e}")
+            raise
+    
+    def _send_customer_confirmation(self, order):
+        """Send order confirmation email to customer"""
+        try:
+            from django.conf import settings
+            from django.core.mail import send_mail
+            from django.template.loader import render_to_string
+            
+            # Calculate order items details
+            items_details = []
+            for item in order.items.all():
+                items_details.append({
+                    'name': item.product_title,
+                    'quantity': item.quantity,
+                    'price': item.price,
+                    'total': item.total_price,
+                    'image': item.product_image,
+                })
+            
+            context = {
+                'user_name': order.customer.first_name or order.customer.username,
+                'order_id': order.order_id,
+                'order_date': order.created_at.strftime('%B %d, %Y'),
+                'items': items_details,
+                'subtotal': order.subtotal,
+                'shipping_cost': order.shipping_cost,
+                'discount': order.discount,
+                'total_amount': order.total_amount,
+                'shipping_address': {
+                    'name': order.shipping_full_name,
+                    'phone': order.shipping_phone,
+                    'address': f"{order.shipping_street}, {order.shipping_city}, {order.shipping_state} {order.shipping_zip_code}",
+                    'country': order.shipping_country,
+                },
+                'payment_method': order.payment_method,
+                'estimated_delivery': '3-5 business days',
+                'tracking_url': f"{getattr(settings, 'FRONTEND_URL', 'http://52.221.195.134')}/orders/{order.order_id}",
+                'site_name': getattr(settings, 'SITE_NAME', 'Flypick'),
+                'current_year': timezone.now().year,
+            }
+            
+            # Render email template
+            try:
+                html_content = render_to_string('email_templates/order_confirmation.html', context)
+            except:
+                # Fallback to simple HTML if template not found
+                html_content = f"""
+                <h2>Order Confirmation - {order.order_id}</h2>
+                <p>Dear {context['user_name']},</p>
+                <p>Thank you for your order! Your order has been confirmed.</p>
+                <p><strong>Order ID:</strong> {order.order_id}</p>
+                <p><strong>Total Amount:</strong> ৳{order.total_amount}</p>
+                <p><strong>Estimated Delivery:</strong> 3-5 business days</p>
+                <p>You can track your order at: <a href="{context['tracking_url']}">Track Order</a></p>
+                <p>Thank you for shopping with {context['site_name']}!</p>
+                """
+            
+            # Send email
+            send_mail(
+                subject=f'Order Confirmation - {order.order_id}',
+                message=f'Your order {order.order_id} has been confirmed. Total: ৳{order.total_amount}',
+                from_email=f"{getattr(settings, 'EMAIL_SENDER_NAME', 'Flypick')} <{getattr(settings, 'SMTP_USER', 'noreply@flypick.com')}>",
+                recipient_list=[order.customer.email],
+                html_message=html_content,
+                fail_silently=False,
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to send customer confirmation for order {order.order_id}: {e}")
+            raise
+    
+    def _send_seller_notifications(self, order):
+        """Send new order notification to sellers"""
+        try:
+            from django.conf import settings
+            from django.core.mail import send_mail
+            from django.template.loader import render_to_string
+            
+            # Get all sellers involved in this order
+            sellers = set()
+            for item in order.items.all():
+                if item.product and item.product.shop:
+                    sellers.add(item.product.shop.seller)
+            
+            for seller in sellers:
+                # Get items for this seller
+                seller_items = []
+                for item in order.items.all():
+                    if item.product and item.product.shop and item.product.shop.seller == seller:
+                        seller_items.append({
+                            'name': item.product_title,
+                            'quantity': item.quantity,
+                            'price': item.price,
+                            'total': item.total_price,
+                        })
+                
+                context = {
+                    'seller_name': seller.first_name or seller.username,
+                    'order_id': order.order_id,
+                    'order_date': order.created_at.strftime('%B %d, %Y'),
+                    'customer_name': order.customer.first_name or order.customer.username,
+                    'customer_email': order.customer.email,
+                    'items': seller_items,
+                    'shipping_address': {
+                        'name': order.shipping_full_name,
+                        'phone': order.shipping_phone,
+                        'address': f"{order.shipping_street}, {order.shipping_city}, {order.shipping_state} {order.shipping_zip_code}",
+                        'country': order.shipping_country,
+                    },
+                    'payment_method': order.payment_method,
+                    'dashboard_url': f"{getattr(settings, 'SELLER_FRONTEND_URL', 'http://52.221.195.134:8080')}/orders",
+                    'site_name': getattr(settings, 'SITE_NAME', 'Flypick'),
+                    'current_year': timezone.now().year,
+                }
+                
+                # Render email template
+                try:
+                    html_content = render_to_string('email_templates/new_order_seller.html', context)
+                except:
+                    # Fallback to simple HTML if template not found
+                    items_html = ""
+                    for item in seller_items:
+                        items_html += f"<li>{item['name']} - Qty: {item['quantity']} - ৳{item['price']} each</li>"
+                    
+                    html_content = f"""
+                    <h2>🎉 New Order Received!</h2>
+                    <p>Dear {context['seller_name']},</p>
+                    <p>You have received a new order!</p>
+                    
+                    <h3>Order Details:</h3>
+                    <p><strong>Order ID:</strong> {order.order_id}</p>
+                    <p><strong>Order Date:</strong> {context['order_date']}</p>
+                    <p><strong>Customer:</strong> {context['customer_name']} ({context['customer_email']})</p>
+                    
+                    <h3>Items Ordered:</h3>
+                    <ul>{items_html}</ul>
+                    
+                    <h3>Shipping Address:</h3>
+                    <p>{context['shipping_address']['name']}<br>
+                    {context['shipping_address']['phone']}<br>
+                    {context['shipping_address']['address']}<br>
+                    {context['shipping_address']['country']}</p>
+                    
+                    <p><strong>Payment Method:</strong> {context['payment_method']}</p>
+                    
+                    <p>Please log in to your seller dashboard to manage this order:</p>
+                    <p><a href="{context['dashboard_url']}">View Order in Dashboard</a></p>
+                    
+                    <p>Thank you for being part of {context['site_name']}!</p>
+                    """
+                
+                # Send email to seller
+                send_mail(
+                    subject=f'🎉 New Order Received - {order.order_id}',
+                    message=f'You have received a new order {order.order_id} from {context["customer_name"]}. Please check your dashboard.',
+                    from_email=f"{getattr(settings, 'EMAIL_SENDER_NAME', 'Flypick')} <{getattr(settings, 'SMTP_USER', 'noreply@flypick.com')}>",
+                    recipient_list=[seller.email],
+                    html_message=html_content,
+                    fail_silently=False,
+                )
+                
+        except Exception as e:
+            logger.error(f"Failed to send seller notifications for order {order.order_id}: {e}")
             raise
 
 

@@ -275,6 +275,17 @@ SIMPLE_JWT = {
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Email Configuration
+# Django Email Backend
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv('SMTP_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('SMTP_PORT', '465'))
+EMAIL_USE_SSL = os.getenv('SMTP_SECURE', 'True') == 'True'
+EMAIL_USE_TLS = False  # Use SSL instead of TLS for port 465
+EMAIL_HOST_USER = os.getenv('SMTP_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('SMTP_PASS', '')
+DEFAULT_FROM_EMAIL = f"{os.getenv('EMAIL_SENDER_NAME', 'Flypick')} <{os.getenv('SMTP_USER', 'noreply@flypick.com')}>"
+
+# Custom SMTP Configuration (for custom email service)
 SMTP_HOST = os.getenv('SMTP_HOST', 'smtp.gmail.com')
 SMTP_PORT = int(os.getenv('SMTP_PORT', '465'))
 SMTP_SECURE = os.getenv('SMTP_SECURE', 'True') == 'True'
