@@ -42,7 +42,7 @@ interface Category {
   slug: string;
 }
 
-function CreateShop() {
+export default function CreateShop() {
   const navigate = useNavigate();
   const { shops, addShop, setCurrentShop } = useShop();
   const { user } = useAuth();
@@ -167,64 +167,6 @@ function CreateShop() {
       setIsSubmitting(false);
     }
   };
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Find the selected category object to get its ID
-      const selectedCategory = categories.find(cat => cat.id.toString() === formData.category);
-
-      // Create shop in backend
-      const response = await api.post('/products/shops/', {
-        name: formData.name,
-        category: selectedCategory ? selectedCategory.id : parseInt(formData.category), // Send category ID
-        description: formData.description,
-        status: 'active',
-      });
-
-      console.log("Shop created:", response.data);
-
-      // Add shop to local context with backend ID
-      const newShop = {
-        id: response.data.id.toString(),
-        name: response.data.name,
-        logo: formData.logo,
-        category: selectedCategory ? selectedCategory.name : formData.category,
-        description: response.data.description,
-        status: response.data.status as "active" | "inactive",
-        createdAt: response.data.createdDate || new Date().toISOString(),
-      };
-
-      addShop(newShop);
-      setCurrentShop(newShop);
-      toast.success("Shop created successfully!");
-      navigate("/");
-    } catch (error: any) {
-      console.error("Failed to create shop:", error);
-      console.error("Error response:", error.response?.data);
-
-      let errorMessage = "Failed to create shop. Please try again.";
-
-      if (error.response?.data) {
-        const data = error.response.data;
-        if (data.category && Array.isArray(data.category)) {
-          errorMessage = `Category error: ${data.category[0]}`;
-        } else if (data.detail) {
-          errorMessage = data.detail;
-        } else if (data.name && Array.isArray(data.name)) {
-          errorMessage = `Name error: ${data.name[0]}`;
-        } else if (data.non_field_errors && Array.isArray(data.non_field_errors)) {
-          errorMessage = data.non_field_errors[0];
-        }
-      }
-
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
@@ -341,4 +283,3 @@ function CreateShop() {
     </div>
   );
 }
-
