@@ -61,6 +61,7 @@ export const useOrders = (shopId?: string | number) => {
 
                 const mappedOrders = data.map((order: any) => {
                     console.log('Mapping order:', { 
+                        raw_order: order,
                         order_id: order.order_id, 
                         id: order.id, 
                         items_count: order.items?.length,
@@ -68,7 +69,7 @@ export const useOrders = (shopId?: string | number) => {
                     });
                     
                     return {
-                        api_id: Number(order.id) || 0,
+                        api_id: Number(order.id) || 0,  // This should be the database ID
                         id: String(order.order_id ?? order.id ?? ""),
                         customer_name: order.customer_name || "Guest",
                         customer_email: order.customer_email || "",
@@ -89,7 +90,7 @@ export const useOrders = (shopId?: string | number) => {
 
                 console.log('Mapped orders:', mappedOrders.length, mappedOrders);
                 return mappedOrders;
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Failed to fetch orders", err);
                 if (err.response) {
                     console.error("Error response:", err.response.status, err.response.data);
@@ -107,18 +108,29 @@ export const useUpdateOrderStatus = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ orderApiId, status }: { orderApiId: string; status: string }) => {
-            const response = await api.patch(`/orders/orders/${orderApiId}/`, {
+        mutationFn: async ({ orderApiId, status }: { orderApiId: number | string; status: string }) => {
+            console.log('Updating order status:', { orderApiId, status, type: typeof orderApiId });
+            
+            // Ensure we're using the correct ID format
+            const id = typeof orderApiId === 'string' ? orderApiId : String(orderApiId);
+            console.log('Using ID for API call:', id);
+            
+            const response = await api.patch(`/orders/orders/${id}/`, {
                 status: status
             });
+            console.log('Order status update response:', response.data);
             return response.data;
         },
-        onSuccess: () => {
+        onSuccess: (data, variables) => {
+            console.log('Order status update successful:', { data, variables });
             // Invalidate and refetch orders
             queryClient.invalidateQueries({ queryKey: ['admin_orders'] });
         },
-        onError: (error) => {
+        onError: (error: any, variables) => {
             console.error('Failed to update order status:', error);
+            console.error('Variables used:', variables);
+            console.error('Error details:', error.response?.data);
+            console.error('Error status:', error.response?.status);
         }
     });
 };

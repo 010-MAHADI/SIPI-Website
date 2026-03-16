@@ -64,7 +64,7 @@ export const useDashboard = (shopId?: string) => {
                     stats,
                     recentOrders,
                 };
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Failed to fetch dashboard stats", err);
                 if (err.response) {
                     console.error("Dashboard error response:", err.response.status, err.response.data);
