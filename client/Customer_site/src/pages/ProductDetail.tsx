@@ -1,7 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Star, Heart, Share2, Truck, ShieldCheck, RotateCcw, ChevronRight, Minus, Plus, Zap } from "lucide-react";
-import { useState, useRef } from "react";
-import { useProduct, useProducts } from "@/hooks/useProducts";
+import { useEffect, useRef, useState } from "react";
+import { useProduct, useProductByPath, useProducts } from "@/hooks/useProducts";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import ProductCard from "@/components/ProductCard";
@@ -13,19 +13,27 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { extractProductId } from "@/lib/slugify";
+import { extractProductId, generateProductUrl, slugify } from "@/lib/slugify";
 
 const ProductDetail = () => {
-  const { id, slug } = useParams();
+  const { id, category, slug } = useParams();
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
-  
-  // For /product/:id/:slug format, use the id directly
-  // For /:category/:slug format, extract ID from the slug
-  const productId = id || (slug ? extractProductId(window.location.pathname)?.toString() : null);
-  
-  const { data: product, isLoading, error } = useProduct(productId ?? "");
-  const { data: allProducts } = useProducts();
+
+  const legacyProductId = !id ? extractProductId(window.location.pathname)?.toString() : null;
+  const categorySlug = category ? slugify(category) : "";
+  const productSlug = slug ? slugify(slug) : "";
+  const shouldResolveByPath = !id && !legacyProductId && !!categorySlug && !!productSlug;
+
+  const {
+    data: resolvedProduct,
+    isLoading: isPathLoading,
+    error: pathError,
+  } = useProductByPath(categorySlug, productSlug);
+  const { data: fetchedProduct, isLoading: isProductLoading, error: productError } = useProduct(id || legacyProductId || "");
+  const product = fetchedProduct || resolvedProduct;
+  const error = productError || pathError;
+  const { data: allProducts = [] } = useProducts();
   const [quantity, setQuantity] = useState(1);
   const { toggleWishlist, isInWishlist } = useWishlist();
   const liked = product ? isInWishlist(product.id) : false;
@@ -38,12 +46,23 @@ const ProductDetail = () => {
   const [showShipping, setShowShipping] = useState(false);
   const { addToCart, setBuyNowItem } = useCart();
 
+  useEffect(() => {
+    if (!product) return;
+
+    const canonicalPath = generateProductUrl(product);
+    if (window.location.pathname !== canonicalPath) {
+      navigate(canonicalPath, { replace: true });
+    }
+  }, [navigate, product]);
+
   const reviewsRef = useRef<HTMLDivElement>(null);
   const specsRef = useRef<HTMLDivElement>(null);
   const descRef = useRef<HTMLDivElement>(null);
   const storeRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
+
+  const isLoading = isProductLoading || (shouldResolveByPath && isPathLoading);
 
   if (isLoading) {
     return (

@@ -53,8 +53,10 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            {/* Legacy product URLs for backward compatibility */}
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/product/:id/:slug" element={<ProductDetail />} />
+            {/* Canonical SEO-friendly URLs: /category/product-slug */}
             <Route path="/:category/:slug" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />

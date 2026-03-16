@@ -1,0 +1,51 @@
+[Unit]
+Description=Flypick Django Application (Gunicorn)
+Documentation=https://docs.gunicorn.org/
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+
+WorkingDirectory=/var/www/Flypick-Website/server
+
+Environment="PATH=/var/www/Flypick-Website/venv/bin"
+Environment="DJANGO_SETTINGS_MODULE=backend.settings"
+EnvironmentFile=/var/www/Flypick-Website/server/.env
+
+ExecStart=/var/www/Flypick-Website/venv/bin/gunicorn \
+    --config /var/www/Flypick-Website/server/gunicorn.conf.py \
+    --bind 127.0.0.1:8000 \
+    --workers 3 \
+    --worker-class sync \
+    --max-requests 1000 \
+    --max-requests-jitter 100 \
+    --timeout 30 \
+    --preload \
+    --access-logfile /var/log/gunicorn/access.log \
+    --error-logfile /var/log/gunicorn/error.log \
+    backend.wsgi:application
+
+ExecReload=/bin/kill -s HUP $MAINPID
+
+Restart=on-failure
+RestartSec=5
+
+KillMode=mixed
+TimeoutStartSec=30
+TimeoutStopSec=30
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+RuntimeDirectory=gunicorn
+RuntimeDirectoryMode=755
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=flypick-gunicorn
+
+[Install]
+WantedBy=multi-user.target

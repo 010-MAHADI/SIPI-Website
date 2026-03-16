@@ -2,6 +2,15 @@
  * Utility functions for generating and parsing product URLs with slugs
  */
 
+interface ProductUrlSource {
+  id: number;
+  title?: string | null;
+  name?: string | null;
+  meta_title?: string | null;
+  category?: string | null;
+  category_name?: string | null;
+}
+
 /**
  * Convert a string to a URL-friendly slug
  */
@@ -18,22 +27,31 @@ export function slugify(text: string | undefined | null): string {
     .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
 }
 
-/**
- * Generate a product URL with slug
- */
-export function generateProductUrl(product: { id: number; title?: string | null; name?: string | null }): string {
-  const productName = product.title || product.name;
-  const slug = slugify(productName);
-  return `/product/${product.id}/${slug}`;
+export function getProductSlug(product: ProductUrlSource): string {
+  return slugify(product.meta_title || product.title || product.name);
+}
+
+export function getProductCategorySlug(product: ProductUrlSource): string {
+  return slugify(product.category_name || product.category || 'products');
 }
 
 /**
- * Extract product ID from a URL slug
+ * Generate a product URL with category and product slug
+ */
+export function generateProductUrl(product: ProductUrlSource): string {
+  const productSlug = getProductSlug(product);
+  const categorySlug = getProductCategorySlug(product);
+
+  return `/${categorySlug}/${productSlug}`;
+}
+
+/**
+ * Extract product ID from legacy product URLs
  */
 export function extractProductId(url: string): number | null {
-  // Handle both formats: /product/123/slug and /product/123
-  const match = url.match(/\/product\/(\d+)(?:\/.*)?$/);
-  return match ? parseInt(match[1], 10) : null;
+  // Legacy format: /product/123/slug or /product/123
+  const legacyMatch = url.match(/\/product\/(\d+)(?:\/.*)?$/);
+  return legacyMatch ? parseInt(legacyMatch[1], 10) : null;
 }
 
 /**

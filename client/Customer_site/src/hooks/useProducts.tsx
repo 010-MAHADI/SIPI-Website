@@ -102,3 +102,16 @@ export const useProduct = (id: number | string) => {
         enabled: !!id,
     });
 };
+
+export const useProductByPath = (category: string, slug: string) => {
+    return useQuery({
+        queryKey: ['product-by-path', category, slug],
+        queryFn: async (): Promise<Product> => {
+            const response = await api.get('/products/resolve/', {
+                params: { category, slug },
+            });
+            return normalizeProduct(response.data);
+        },
+        enabled: !!category && !!slug,
+    });
+};

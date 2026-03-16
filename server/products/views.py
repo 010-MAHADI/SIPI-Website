@@ -2,8 +2,9 @@ from urllib.parse import urlparse
 
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.response import Response
+from django.utils.text import slugify
 
 from users.roles import is_admin_user, is_seller_user
 from users.services import ensure_admin_shop
@@ -88,7 +89,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        base_qs = Product.objects.select_related('shop').prefetch_related('gallery_images', 'gallery_videos')
+        base_qs = Product.objects.select_related('shop', 'category_fk').prefetch_related('gallery_images', 'gallery_videos')
         
         # For public access (list/retrieve without auth or for customers)
         if self.action in ['list', 'retrieve']:
@@ -121,6 +122,41 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         user_shop_ids = Shop.objects.filter(seller=self.request.user).values_list('id', flat=True)
         return base_qs.filter(shop_id__in=user_shop_ids)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        permission_classes=[permissions.AllowAny],
+        url_path="resolve",
+    )
+    def resolve(self, request):
+        category_slug = (request.query_params.get("category") or "").strip()
+        product_slug = (request.query_params.get("slug") or "").strip()
+
+        if not category_slug or not product_slug:
+            raise ValidationError("Both category and slug query parameters are required.")
+
+        matched_product = None
+        for product in self.get_queryset():
+            normalized_category = slugify(
+                getattr(product.category_fk, "name", None)
+                or product.category
+                or getattr(product.shop, "category", None)
+                or "products"
+            )
+            normalized_product = slugify(product.meta_title or product.title or "")
+
+            if normalized_category != category_slug:
+                continue
+            if normalized_product == product_slug or f"{normalized_product}-{product.id}" == product_slug:
+                matched_product = product
+                break
+
+        if not matched_product:
+            raise NotFound("Product not found for the provided category and slug.")
+
+        serializer = self.get_serializer(matched_product)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
         user = self.request.user
