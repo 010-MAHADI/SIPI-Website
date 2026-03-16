@@ -179,6 +179,56 @@ class SellerOrderIsolationTest(APITestCase):
         self.assertEqual(data_two[0]["items"][0]["product_title"], "Seller Two Product")
         self.assertEqual(Decimal(data_two[0]["total_amount"]), Decimal("50.00"))
 
+    def test_admin_shop_scope_only_shows_items_for_selected_shop(self):
+        admin_user = User.objects.create_user(
+            username="admin_scope",
+            email="admin_scope@example.com",
+            password="pass1234",
+            role="Admin",
+        )
+        admin_shop = Shop.objects.create(
+            seller=admin_user,
+            name="Admin Shop",
+            category="General",
+        )
+        admin_product = Product.objects.create(
+            shop=admin_shop,
+            title="Admin Shop Product",
+            price=Decimal("75.00"),
+        )
+
+        order = Order.objects.create(
+            customer=self.customer,
+            order_id="FPTESTSHOPADMIN001",
+            subtotal=Decimal("125.00"),
+            total_amount=Decimal("125.00"),
+            status="pending",
+        )
+        OrderItem.objects.create(
+            order=order,
+            product=admin_product,
+            product_title=admin_product.title,
+            quantity=1,
+            price=Decimal("75.00"),
+        )
+        OrderItem.objects.create(
+            order=order,
+            product=self.product_two,
+            product_title=self.product_two.title,
+            quantity=1,
+            price=Decimal("50.00"),
+        )
+
+        self.client.force_authenticate(user=admin_user)
+        response = self.client.get(f"/api/orders/orders/?shop={admin_shop.id}")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.data.get("results", response.data)
+        self.assertEqual(len(data), 1)
+        self.assertEqual(len(data[0]["items"]), 1)
+        self.assertEqual(data[0]["items"][0]["product_title"], "Admin Shop Product")
+        self.assertEqual(Decimal(data[0]["total_amount"]), Decimal("75.00"))
+
 
 @override_settings(SECURE_SSL_REDIRECT=False)
 class OrderCreationSignalRegressionTest(APITestCase):

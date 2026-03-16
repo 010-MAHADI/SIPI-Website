@@ -78,19 +78,37 @@ class OrderSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'order_id', 'customer', 'created_at', 'updated_at']
 
-    def _is_seller_request(self):
+    def _request_user(self):
         request = self.context.get('request')
-        user = getattr(request, 'user', None)
+        return getattr(request, 'user', None)
+
+    def _requested_shop_id(self):
+        request = self.context.get('request')
+        if not request:
+            return None
+        return request.query_params.get('shop')
+
+    def _is_seller_request(self):
+        user = self._request_user()
         return bool(
             user
             and user.is_authenticated
             and getattr(user, 'role', '') == 'Seller'
         )
 
+    def _is_scoped_request(self):
+        return bool(self._requested_shop_id() or self._is_seller_request())
+
     def _get_visible_items(self, obj):
         items = list(obj.items.all())
-        if self._is_seller_request():
-            user = self.context['request'].user
+        requested_shop_id = self._requested_shop_id()
+        if requested_shop_id:
+            items = [
+                item for item in items
+                if item.product and str(item.product.shop_id) == str(requested_shop_id)
+            ]
+        elif self._is_seller_request():
+            user = self._request_user()
             items = [
                 item for item in items
                 if item.product and item.product.shop and item.product.shop.seller_id == user.id
@@ -108,13 +126,13 @@ class OrderSerializer(serializers.ModelSerializer):
         return total
 
     def get_subtotal(self, obj):
-        if self._is_seller_request():
+        if self._is_scoped_request():
             return self._get_seller_items_total(obj)
         return obj.subtotal
 
     def get_total_amount(self, obj):
-        if self._is_seller_request():
-            # For seller views, only include the seller's own item totals.
+        if self._is_scoped_request():
+            # For shop/seller scoped views, only include the visible item totals.
             return self._get_seller_items_total(obj)
         return obj.total_amount
 
