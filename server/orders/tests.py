@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import override_settings
 from decimal import Decimal
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, APIRequestFactory
 
 from orders.models import Order, OrderItem
 from orders.serializers import OrderCreateSerializer
@@ -178,3 +178,63 @@ class SellerOrderIsolationTest(APITestCase):
         self.assertEqual(len(data_two[0]["items"]), 1)
         self.assertEqual(data_two[0]["items"][0]["product_title"], "Seller Two Product")
         self.assertEqual(Decimal(data_two[0]["total_amount"]), Decimal("50.00"))
+
+
+@override_settings(SECURE_SSL_REDIRECT=False)
+class OrderCreationSignalRegressionTest(APITestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.customer = User.objects.create_user(
+            username="signal_customer",
+            email="signal_customer@example.com",
+            password="pass1234",
+            role="Customer",
+        )
+        self.seller = User.objects.create_user(
+            username="signal_seller",
+            email="signal_seller@example.com",
+            password="pass1234",
+            role="Seller",
+        )
+        self.shop = Shop.objects.create(
+            seller=self.seller,
+            name="Signal Shop",
+            category="General",
+        )
+        self.product = Product.objects.create(
+            shop=self.shop,
+            title="Signal Product",
+            price=Decimal("99.00"),
+        )
+
+    def test_order_create_serializer_is_not_broken_by_promotion_signal(self):
+        request = self.factory.post("/api/orders/orders/")
+        request.user = self.customer
+
+        serializer = OrderCreateSerializer(
+            data={
+                "shipping_full_name": "Signal Customer",
+                "shipping_phone": "01700000000",
+                "shipping_street": "Road 1",
+                "shipping_city": "Dhaka",
+                "shipping_state": "",
+                "shipping_zip_code": "1200",
+                "shipping_country": "Bangladesh",
+                "payment_method": "cod",
+                "items": [
+                    {
+                        "product_id": self.product.id,
+                        "quantity": 1,
+                        "color": "",
+                        "size": "",
+                    }
+                ],
+            },
+            context={"request": request},
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        order = serializer.save()
+
+        self.assertEqual(order.customer, self.customer)
+        self.assertEqual(order.items.count(), 1)

@@ -13,6 +13,7 @@ export interface OrderItemApi {
 }
 
 export interface Order {
+    api_id: number;
     id: string;
     customer_name: string;
     customer_email: string;
@@ -39,7 +40,7 @@ const mapStatus = (status: string): Order["status"] => {
     return "Pending";
 };
 
-export const useOrders = (shopId?: string) => {
+export const useOrders = (shopId?: string | number) => {
     return useQuery({
         queryKey: ['admin_orders', shopId],
         queryFn: async (): Promise<Order[]> => {
@@ -67,6 +68,7 @@ export const useOrders = (shopId?: string) => {
                     });
                     
                     return {
+                        api_id: Number(order.id) || 0,
                         id: String(order.order_id ?? order.id ?? ""),
                         customer_name: order.customer_name || "Guest",
                         customer_email: order.customer_email || "",

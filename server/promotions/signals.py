@@ -8,17 +8,20 @@ from django.utils import timezone
 @receiver(post_save, sender=Order)
 def track_promotion_revenue(sender, instance, created, **kwargs):
     """Track revenue generated from promotion campaigns"""
-    if created and instance.user:
+    customer = getattr(instance, "customer", None)
+    if created and customer:
         # Find recent promotion recipients for this user
         recent_recipients = PromotionRecipient.objects.filter(
-            user=instance.user,
+            user=customer,
             sent_at__gte=timezone.now() - timezone.timedelta(days=7),  # Within last 7 days
             email_clicked=True  # Only if they clicked the email
         )
         
         for recipient in recent_recipients:
             # Check if any of the ordered products were in the promotion
-            order_products = set(item.product.id for item in instance.items.all())
+            order_products = {
+                item.product_id for item in instance.items.all() if item.product_id
+            }
             promotion_products = set(recipient.campaign.products.values_list('id', flat=True))
             
             if order_products.intersection(promotion_products):

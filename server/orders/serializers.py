@@ -12,7 +12,7 @@ class PaymentMethodSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    product_details = ProductSerializer(source='product', read_only=True)
+    product_details = serializers.SerializerMethodField()
     total_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     product_image_url = serializers.SerializerMethodField()
 
@@ -21,6 +21,20 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'product_title', 'product_image', 'product_image_url', 'color', 'size', 'quantity', 'price', 'total_price', 'product_details']
         read_only_fields = ['id', 'total_price']
     
+    def get_product_details(self, obj):
+        if not obj.product:
+            return None
+
+        try:
+            return ProductSerializer(obj.product, context=self.context).data
+        except Exception:
+            # Keep orders list/detail usable even if current product metadata is malformed.
+            return {
+                'id': obj.product_id,
+                'title': obj.product_title,
+                'image_url': self.get_product_image_url(obj),
+            }
+
     def get_product_image_url(self, obj):
         """Return full URL for the product image"""
         if obj.product and obj.product.image:
