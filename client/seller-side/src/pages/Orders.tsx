@@ -67,7 +67,7 @@ interface Order {
   phone: string;
   items: OrderItem[];
   amount: number;
-  status: "Pending" | "Processing" | "Shipped" | "Delivered" | "Cancelled";
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   payment: "Paid" | "Unpaid" | "Refunded" | "Partially Refunded";
   paymentMethod: string;
   date: string;
@@ -88,11 +88,11 @@ interface Order {
 const defaultOrders: Order[] = [];
 
 const orderStatusClass: Record<string, string> = {
-  Pending: "status-badge status-badge--warning",
-  Processing: "status-badge status-badge--info",
-  Shipped: "status-badge status-badge--info",
-  Delivered: "status-badge status-badge--success",
-  Cancelled: "status-badge status-badge--destructive",
+  pending: "status-badge status-badge--warning",
+  processing: "status-badge status-badge--info",
+  shipped: "status-badge status-badge--info",
+  delivered: "status-badge status-badge--success",
+  cancelled: "status-badge status-badge--destructive",
 };
 
 const paymentClass: Record<string, string> = {
@@ -120,10 +120,10 @@ function getTabFilter(tab: TabKey, order: Order, returnRequests?: any[]): boolea
   switch (tab) {
     case "all": return true;
     case "unpaid": return order.payment === "Unpaid";
-    case "to_ship": return order.status === "Pending" || order.status === "Processing";
-    case "shipping": return order.status === "Shipped";
-    case "delivered": return order.status === "Delivered";
-    case "cancelled": return order.status === "Cancelled";
+    case "to_ship": return order.status === "pending" || order.status === "processing";
+    case "shipping": return order.status === "shipped";
+    case "delivered": return order.status === "delivered";
+    case "cancelled": return order.status === "cancelled";
     case "returns": {
       // Show orders that have return requests
       if (!returnRequests || returnRequests.length === 0) {
@@ -147,7 +147,7 @@ function CountdownTimer({ deadlineDate, status }: { deadlineDate: string; status
   const [isOverdue, setIsOverdue] = useState(false);
 
   useEffect(() => {
-    if (status === "Delivered" || status === "Cancelled") {
+    if (status === "delivered" || status === "cancelled") {
       setTimeLeft("");
       return;
     }
@@ -206,8 +206,8 @@ function getTimeline(order: Order): TimelineEvent[] {
     });
   }
 
-  if (order.status !== "Cancelled") {
-    const statusOrder = ["Processing", "Shipped", "Delivered"];
+  if (order.status !== "cancelled") {
+    const statusOrder = ["processing", "shipped", "delivered"];
     const currentIdx = statusOrder.indexOf(order.status);
     for (let i = currentIdx + 1; i < statusOrder.length; i++) {
       baseEvents.push({ label: statusOrder[i], date: "", done: false });
@@ -389,7 +389,7 @@ export default function Orders() {
 
   // Dialog states
   const [statusDialog, setStatusDialog] = useState<StatusDialogState>({
-    open: false, orderId: "", targetStatus: "Processing", message: "", trackingNumber: "",
+    open: false, orderId: "", targetStatus: "processing", message: "", trackingNumber: "",
   });
   const [paymentDialog, setPaymentDialog] = useState<PaymentDialogState>({
     open: false, orderId: "", paymentMethod: "", description: "",
@@ -416,8 +416,8 @@ export default function Orders() {
     if (isLoading) return { total: 0, revenue: 0, pending: 0, delivered: 0 };
     const total = orders.length;
     const revenue = orders.reduce((s, o) => s + (o.payment !== "Refunded" ? o.amount : 0), 0);
-    const pending = orders.filter((o) => o.status === "Pending" || o.status === "Processing").length;
-    const delivered = orders.filter((o) => o.status === "Delivered").length;
+    const pending = orders.filter((o) => o.status === "pending" || o.status === "processing").length;
+    const delivered = orders.filter((o) => o.status === "delivered").length;
     return { total, revenue, pending, delivered };
   }, [orders, isLoading]);
 
@@ -426,10 +426,10 @@ export default function Orders() {
     orders.forEach((o) => {
       counts.all++;
       if (o.payment === "Unpaid") counts.unpaid++;
-      if (o.status === "Pending" || o.status === "Processing") counts.to_ship++;
-      if (o.status === "Shipped") counts.shipping++;
-      if (o.status === "Delivered") counts.delivered++;
-      if (o.status === "Cancelled") counts.cancelled++;
+      if (o.status === "pending" || o.status === "processing") counts.to_ship++;
+      if (o.status === "shipped") counts.shipping++;
+      if (o.status === "delivered") counts.delivered++;
+      if (o.status === "cancelled") counts.cancelled++;
     });
     // Count orders with return requests
     if (returnRequests) {
@@ -515,7 +515,7 @@ export default function Orders() {
       } : null);
     }
     toast.success(`Order ${orderId} marked as ${targetStatus}`);
-    setStatusDialog({ open: false, orderId: "", targetStatus: "Processing", message: "", trackingNumber: "" });
+    setStatusDialog({ open: false, orderId: "", targetStatus: "processing", message: "", trackingNumber: "" });
   };
 
   // Payment confirmation for unpaid orders
@@ -666,13 +666,13 @@ export default function Orders() {
   };
 
   const statusDialogLabels: Record<string, { title: string; icon: React.ElementType; description: string }> = {
-    Processing: { title: "Start Processing", icon: Clock, description: "Mark this order as being processed. Add a message for the tracking timeline." },
-    Shipped: { title: "Mark as Shipped", icon: Truck, description: "Confirm shipment. You can add a tracking number and message." },
-    Delivered: { title: "Mark as Delivered", icon: CheckCircle, description: "Confirm delivery completion with an optional note." },
-    Cancelled: { title: "Cancel Order", icon: XCircle, description: "Cancel this order. Please provide a reason." },
+    processing: { title: "Start Processing", icon: Clock, description: "Mark this order as being processed. Add a message for the tracking timeline." },
+    shipped: { title: "Mark as Shipped", icon: Truck, description: "Confirm shipment. You can add a tracking number and message." },
+    delivered: { title: "Mark as Delivered", icon: CheckCircle, description: "Confirm delivery completion with an optional note." },
+    cancelled: { title: "Cancel Order", icon: XCircle, description: "Cancel this order. Please provide a reason." },
   };
 
-  const currentStatusLabel = statusDialogLabels[statusDialog.targetStatus] || statusDialogLabels.Processing;
+  const currentStatusLabel = statusDialogLabels[statusDialog.targetStatus] || statusDialogLabels.processing;
   const StatusIcon = currentStatusLabel.icon;
 
   // Detail view
@@ -740,24 +740,24 @@ export default function Orders() {
                 <Banknote className="h-4 w-4 mr-1.5" /> Mark Paid
               </Button>
             )}
-            {selectedOrder.status !== "Delivered" && selectedOrder.status !== "Cancelled" && (
+            {selectedOrder.status !== "delivered" && selectedOrder.status !== "cancelled" && (
               <>
-                {selectedOrder.status === "Pending" && (
-                  <Button variant="outline" size="sm" className="rounded-lg" onClick={() => openStatusDialog(selectedOrder.id, "Processing")}>
+                {selectedOrder.status === "pending" && (
+                  <Button variant="outline" size="sm" className="rounded-lg" onClick={() => openStatusDialog(selectedOrder.id, "processing")}>
                     <Clock className="h-4 w-4 mr-1.5" /> Start Processing
                   </Button>
                 )}
-                {(selectedOrder.status === "Pending" || selectedOrder.status === "Processing") && (
-                  <Button variant="outline" size="sm" className="rounded-lg" onClick={() => openStatusDialog(selectedOrder.id, "Shipped")}>
+                {(selectedOrder.status === "pending" || selectedOrder.status === "processing") && (
+                  <Button variant="outline" size="sm" className="rounded-lg" onClick={() => openStatusDialog(selectedOrder.id, "shipped")}>
                     <Truck className="h-4 w-4 mr-1.5" /> Mark Shipped
                   </Button>
                 )}
-                <Button size="sm" className="rounded-lg" onClick={() => openStatusDialog(selectedOrder.id, "Delivered")}>
+                <Button size="sm" className="rounded-lg" onClick={() => openStatusDialog(selectedOrder.id, "delivered")}>
                   <CheckCircle className="h-4 w-4 mr-1.5" /> Mark Delivered
                 </Button>
               </>
             )}
-            {selectedOrder.status === "Delivered" && selectedOrder.payment !== "Refunded" && (
+            {selectedOrder.status === "delivered" && selectedOrder.payment !== "Refunded" && (
               <Button variant="outline" size="sm" className="rounded-lg" onClick={() => openRefundDialog(selectedOrder.id)}>
                 <RotateCcw className="h-4 w-4 mr-1.5" /> Return / Refund
               </Button>
@@ -1039,7 +1039,7 @@ export default function Orders() {
             </div>
 
             {/* Add Tracking Update */}
-            {selectedOrder.status !== "Delivered" && selectedOrder.status !== "Cancelled" && (
+            {selectedOrder.status !== "delivered" && selectedOrder.status !== "cancelled" && (
               <div className="stat-card space-y-4">
                 <h2 className="section-title flex items-center gap-2"><Plus className="h-4 w-4 text-primary" /> Add Tracking Update</h2>
                 <div className="space-y-3">
@@ -1051,9 +1051,9 @@ export default function Orders() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Note">Note (no status change)</SelectItem>
-                        <SelectItem value="Processing">Processing</SelectItem>
-                        <SelectItem value="Shipped">Shipped</SelectItem>
-                        <SelectItem value="Delivered">Delivered</SelectItem>
+                        <SelectItem value="processing">Processing</SelectItem>
+                        <SelectItem value="shipped">Shipped</SelectItem>
+                        <SelectItem value="delivered">Delivered</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1129,13 +1129,13 @@ export default function Orders() {
               <div className="space-y-1.5">
                 <Label className="text-sm">Message <span className="text-muted-foreground text-xs">(optional)</span></Label>
                 <Textarea
-                  placeholder={`e.g. ${statusDialog.targetStatus === "Shipped" ? "Package shipped via USPS Priority..." : statusDialog.targetStatus === "Cancelled" ? "Customer requested cancellation..." : "Order is being prepared..."}`}
+                  placeholder={`e.g. ${statusDialog.targetStatus === "shipped" ? "Package shipped via USPS Priority..." : statusDialog.targetStatus === "cancelled" ? "Customer requested cancellation..." : "Order is being prepared..."}`}
                   value={statusDialog.message}
                   onChange={(e) => setStatusDialog(s => ({ ...s, message: e.target.value }))}
                   className="rounded-lg text-sm min-h-[80px] resize-none"
                 />
               </div>
-              {(statusDialog.targetStatus === "Shipped" || statusDialog.targetStatus === "Processing") && (
+              {(statusDialog.targetStatus === "shipped" || statusDialog.targetStatus === "processing") && (
                 <div className="space-y-1.5">
                   <Label className="text-sm">Tracking Number <span className="text-muted-foreground text-xs">(optional)</span></Label>
                   <Input
@@ -1151,7 +1151,7 @@ export default function Orders() {
               <Button variant="outline" className="rounded-lg" onClick={() => setStatusDialog(s => ({ ...s, open: false }))}>Cancel</Button>
               <Button
                 className="rounded-lg"
-                variant={statusDialog.targetStatus === "Cancelled" ? "destructive" : "default"}
+                variant={statusDialog.targetStatus === "cancelled" ? "destructive" : "default"}
                 onClick={confirmStatusUpdate}
                 disabled={updateOrderStatus.isPending}
               >
@@ -1500,18 +1500,18 @@ export default function Orders() {
                     <Banknote className="h-3.5 w-3.5 mr-1" /> Pay
                   </Button>
                 )}
-                {order.status === "Pending" && order.payment !== "Unpaid" && (
-                  <Button size="sm" variant="outline" className="rounded-lg text-xs h-8" onClick={() => openStatusDialog(order.id, "Processing")}>
+                {order.status === "pending" && order.payment !== "Unpaid" && (
+                  <Button size="sm" variant="outline" className="rounded-lg text-xs h-8" onClick={() => openStatusDialog(order.id, "processing")}>
                     Process
                   </Button>
                 )}
-                {order.status === "Processing" && (
-                  <Button size="sm" className="rounded-lg text-xs h-8" onClick={() => openStatusDialog(order.id, "Shipped")}>
+                {order.status === "processing" && (
+                  <Button size="sm" className="rounded-lg text-xs h-8" onClick={() => openStatusDialog(order.id, "shipped")}>
                     <Truck className="h-3.5 w-3.5 mr-1" /> Ship
                   </Button>
                 )}
-                {order.status === "Shipped" && (
-                  <Button size="sm" className="rounded-lg text-xs h-8" onClick={() => openStatusDialog(order.id, "Delivered")}>
+                {order.status === "shipped" && (
+                  <Button size="sm" className="rounded-lg text-xs h-8" onClick={() => openStatusDialog(order.id, "delivered")}>
                     <CheckCircle className="h-3.5 w-3.5 mr-1" /> Deliver
                   </Button>
                 )}
@@ -1527,17 +1527,17 @@ export default function Orders() {
                     {order.payment === "Unpaid" && (
                       <DropdownMenuItem onClick={() => openPaymentDialog(order.id)}><Banknote className="h-4 w-4 mr-2" /> Mark Paid</DropdownMenuItem>
                     )}
-                    <DropdownMenuItem onClick={() => openStatusDialog(order.id, "Processing")}><Clock className="h-4 w-4 mr-2" /> Mark Processing</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => openStatusDialog(order.id, "Shipped")}><Truck className="h-4 w-4 mr-2" /> Mark Shipped</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => openStatusDialog(order.id, "Delivered")}><CheckCircle className="h-4 w-4 mr-2" /> Mark Delivered</DropdownMenuItem>
-                    {order.status === "Delivered" && order.payment !== "Refunded" && (
+                    <DropdownMenuItem onClick={() => openStatusDialog(order.id, "processing")}><Clock className="h-4 w-4 mr-2" /> Mark Processing</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openStatusDialog(order.id, "shipped")}><Truck className="h-4 w-4 mr-2" /> Mark Shipped</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openStatusDialog(order.id, "delivered")}><CheckCircle className="h-4 w-4 mr-2" /> Mark Delivered</DropdownMenuItem>
+                    {order.status === "delivered" && order.payment !== "Refunded" && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => openRefundDialog(order.id)}><RotateCcw className="h-4 w-4 mr-2" /> Return / Refund</DropdownMenuItem>
                       </>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive" onClick={() => openStatusDialog(order.id, "Cancelled")}><XCircle className="h-4 w-4 mr-2" /> Cancel Order</DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive" onClick={() => openStatusDialog(order.id, "cancelled")}><XCircle className="h-4 w-4 mr-2" /> Cancel Order</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

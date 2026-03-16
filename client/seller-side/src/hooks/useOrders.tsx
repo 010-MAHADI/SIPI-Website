@@ -24,7 +24,7 @@ export interface Order {
     shipping_zip_code?: string;
     shipping_country?: string;
     date: string;
-    status: "Pending" | "Processing" | "Shipped" | "Delivered" | "Cancelled";
+    status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
     payment_status: string;
     total: number;
     paymentMethod: string;
@@ -33,11 +33,11 @@ export interface Order {
 
 const mapStatus = (status: string): Order["status"] => {
     const normalized = (status || "").toLowerCase();
-    if (normalized === "completed" || normalized === "delivered") return "Delivered";
-    if (normalized === "shipped") return "Shipped";
-    if (normalized === "processing") return "Processing";
-    if (normalized === "cancelled") return "Cancelled";
-    return "Pending";
+    if (normalized === "completed" || normalized === "delivered") return "delivered";
+    if (normalized === "shipped") return "shipped";
+    if (normalized === "processing") return "processing";
+    if (normalized === "cancelled") return "cancelled";
+    return "pending";
 };
 
 export const useOrders = (shopId?: string | number) => {
@@ -115,8 +115,12 @@ export const useUpdateOrderStatus = () => {
             const id = typeof orderApiId === 'string' ? orderApiId : String(orderApiId);
             console.log('Using ID for API call:', id);
             
+            // Convert status to lowercase to match backend expectations
+            const normalizedStatus = status.toLowerCase();
+            console.log('Normalized status:', normalizedStatus);
+            
             const response = await api.patch(`/orders/orders/${id}/`, {
-                status: status
+                status: normalizedStatus
             });
             console.log('Order status update response:', response.data);
             return response.data;
