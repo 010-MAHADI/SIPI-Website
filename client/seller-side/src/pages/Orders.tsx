@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { useOrders, useUpdateOrderStatus } from "@/hooks/useOrders";
 import { useShop } from "@/context/ShopContext";
 import { useReturns, useUpdateReturnStatus } from "@/hooks/useReturns";
+import { useAuth } from "@/context/AuthContext";
 
 interface OrderItem {
   name: string;
@@ -306,9 +307,11 @@ const PAYMENT_METHODS = [
 
 export default function Orders() {
   const { currentShop } = useShop();
-  const { data: fetchedOrders, isLoading } = useOrders(currentShop?.id ? Number(currentShop.id) : undefined);
+  const { isAdmin } = useAuth();
+  const selectedShopId = !isAdmin && currentShop?.id ? Number(currentShop.id) : undefined;
+  const { data: fetchedOrders, isLoading } = useOrders(selectedShopId);
   const updateOrderStatus = useUpdateOrderStatus();
-  const { data: returnRequests } = useReturns(currentShop?.id ? Number(currentShop.id) : undefined);
+  const { data: returnRequests } = useReturns(selectedShopId);
   const updateReturnStatus = useUpdateReturnStatus();
   const [orders, setOrders] = useState(defaultOrders);
 

@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useShop } from "@/context/ShopContext";
+import { useAuth } from "@/context/AuthContext";
 
 type Period = "today" | "this_week" | "this_month" | "this_year";
 
@@ -155,8 +156,11 @@ const statusClass: Record<string, string> = {
 export default function Dashboard() {
   const [period, setPeriod] = useState<Period>("this_month");
   const { currentShop } = useShop();
+  const { isAdmin } = useAuth();
 
-  const { data: dashboardData, isLoading } = useDashboard(currentShop?.id);
+  const { data: dashboardData, isLoading } = useDashboard(
+    isAdmin ? undefined : currentShop?.id
+  );
 
   const revData = revenueByPeriod[period];
 
