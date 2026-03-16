@@ -3,6 +3,12 @@ from django.conf import settings
 from products.models import Product
 
 class Review(models.Model):
+    STATUS_CHOICES = (
+        ("published", "Published"),
+        ("pending", "Pending"),
+        ("rejected", "Rejected"),
+    )
+    
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews')
     
@@ -10,6 +16,7 @@ class Review(models.Model):
     text = models.TextField()
     
     helpful = models.IntegerField(default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="published")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

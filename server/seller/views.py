@@ -11,13 +11,13 @@ from rest_framework.views import APIView
 from orders.models import Order, OrderItem
 from products.models import Product
 from users.roles import is_admin_user
+from reviews.models import Review  # Import from reviews app instead
 
-from .models import Category, Coupon, PaymentMethodSetting, Review
+from .models import Category, Coupon, PaymentMethodSetting
 from .serializers import (
     CategorySerializer,
     CouponSerializer,
     PaymentMethodSettingSerializer,
-    ReviewSerializer,
     SellerProductPreviewSerializer,
 )
 
@@ -64,24 +64,39 @@ class CategoryViewSet(SellerScopedModelViewSet):
 
 
 class ReviewViewSet(SellerScopedModelViewSet):
-    serializer_class = ReviewSerializer
-    http_method_names = ["get", "post", "patch", "head", "options"]
+    http_method_names = ["get", "patch", "head", "options"]
+
+    def get_serializer_class(self):
+        # Use the reviews app serializer
+        from reviews.serializers import ReviewSerializer
+        return ReviewSerializer
 
     def get_queryset(self):
         user = self.request.user
         if is_admin_user(user) and not self.request.query_params.get("seller_id"):
-            return Review.objects.select_related("product", "customer", "seller")
-        return Review.objects.select_related("product", "customer", "seller").filter(
-            seller=self.get_seller()
-        )
+            # Admin can see all reviews
+            return Review.objects.select_related("product", "user").all()
+        else:
+            # Sellers can only see reviews for their products
+            seller = self.get_seller()
+            return Review.objects.select_related("product", "user").filter(
+                product__shop__seller=seller
+            )
 
-    def perform_create(self, serializer):
-        seller = self.get_seller()
-        product = serializer.validated_data.get("product")
-        if product and product.shop.seller_id != seller.id:
-            serializer.save(seller=product.shop.seller)
-            return
-        serializer.save(seller=seller)
+    def update(self, request, *args, **kwargs):
+        # Allow updating review status
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        
+        # Only allow updating status field for now
+        allowed_fields = ['status']
+        filtered_data = {k: v for k, v in request.data.items() if k in allowed_fields}
+        
+        serializer = self.get_serializer(instance, data=filtered_data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        return Response(serializer.data)
 
 
 class CouponViewSet(SellerScopedModelViewSet):

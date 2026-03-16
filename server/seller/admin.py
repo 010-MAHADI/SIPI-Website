@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Coupon, CouponProduct, PaymentMethodSetting, Review
+from .models import Category, Coupon, CouponProduct, PaymentMethodSetting
 
 
 @admin.register(Category)
@@ -8,13 +8,6 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ("name", "seller", "status", "updated_at")
     search_fields = ("name", "seller__email", "seller__username")
     list_filter = ("status",)
-
-
-@admin.register(Review)
-class ReviewAdmin(admin.ModelAdmin):
-    list_display = ("id", "seller", "product", "rating", "status", "created_at")
-    search_fields = ("product__title", "customer__email", "customer__username", "comment")
-    list_filter = ("status", "rating")
 
 
 @admin.register(Coupon)

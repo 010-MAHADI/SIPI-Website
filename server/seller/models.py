@@ -35,35 +35,6 @@ class Category(models.Model):
         return f"{self.name} ({self.seller_id})"
 
 
-class Review(models.Model):
-    STATUS_CHOICES = (
-        ("published", "Published"),
-        ("pending", "Pending"),
-        ("rejected", "Rejected"),
-    )
-
-    seller = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="seller_reviews"
-    )
-    product = models.ForeignKey(
-        Product, on_delete=models.SET_NULL, null=True, blank=True, related_name="seller_reviews"
-    )
-    customer = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="written_reviews"
-    )
-    rating = models.PositiveSmallIntegerField(default=5)
-    comment = models.TextField(blank=True, default="")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ["-created_at"]
-
-    def __str__(self):
-        return f"Review #{self.id} ({self.rating}/5)"
-
-
 class Coupon(models.Model):
     DISCOUNT_TYPE_CHOICES = (
         ("percent", "Percent"),

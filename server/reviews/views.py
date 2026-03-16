@@ -13,8 +13,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         product_id = self.kwargs.get('product_pk')
         if product_id:
-            return Review.objects.filter(product_id=product_id)
-        return Review.objects.all()
+            # For public product pages, only show published reviews
+            return Review.objects.filter(product_id=product_id, status='published')
+        return Review.objects.filter(status='published')
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -33,12 +34,13 @@ class ReviewViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=request.user, product_id=product_id)
+        # Reviews are published by default for now, can be changed to 'pending' if moderation is needed
+        serializer.save(user=request.user, product_id=product_id, status='published')
         
         # Update product rating and reviews_count
         from products.models import Product
         product = Product.objects.get(id=product_id)
-        reviews = Review.objects.filter(product=product)
+        reviews = Review.objects.filter(product=product, status='published')
         product.reviews_count = reviews.count()
         product.rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
         product.save()

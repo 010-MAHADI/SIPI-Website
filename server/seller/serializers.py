@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from products.models import Product
 
-from .models import Category, Coupon, PaymentMethodSetting, Review
+from .models import Category, Coupon, PaymentMethodSetting
 
 
 class SellerProductPreviewSerializer(serializers.ModelSerializer):
@@ -77,44 +77,6 @@ class CategorySerializer(serializers.ModelSerializer):
             if queryset.exists():
                 raise serializers.ValidationError("Category with this name already exists.")
         return cleaned
-
-
-class ReviewSerializer(serializers.ModelSerializer):
-    product_name = serializers.CharField(source="product.title", read_only=True)
-    customer_name = serializers.SerializerMethodField()
-    customer_email = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Review
-        fields = [
-            "id",
-            "product",
-            "product_name",
-            "customer",
-            "customer_name",
-            "customer_email",
-            "rating",
-            "comment",
-            "status",
-            "created_at",
-            "updated_at",
-        ]
-        read_only_fields = ["created_at", "updated_at"]
-
-    def get_customer_name(self, obj):
-        if obj.customer:
-            return obj.customer.username or obj.customer.email
-        return "Guest"
-
-    def get_customer_email(self, obj):
-        if obj.customer:
-            return obj.customer.email
-        return ""
-
-    def validate_rating(self, value):
-        if value < 1 or value > 5:
-            raise serializers.ValidationError("Rating must be between 1 and 5.")
-        return value
 
 
 class CouponSerializer(serializers.ModelSerializer):
