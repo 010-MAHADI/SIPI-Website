@@ -6,6 +6,7 @@ export interface ReceiptOrder {
   phone: string;
   items: Array<{ name: string; sku: string; qty: number; price: number; imageUrl?: string }>;
   amount: number;
+  subtotal?: number;
   shippingCost?: number;
   discount?: number;
   status: string;
@@ -35,7 +36,12 @@ const clean = (value?: string | null) => {
 const esc = (value: string) =>
   (value || "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char] || char));
 
-const subtotal = (order: ReceiptOrder) => order.items.reduce((sum, item) => sum + item.qty * item.price, 0);
+const subtotal = (order: ReceiptOrder) => {
+  if (typeof order.subtotal === "number" && Number.isFinite(order.subtotal)) {
+    return Math.max(order.subtotal, 0);
+  }
+  return order.items.reduce((sum, item) => sum + item.qty * item.price, 0);
+};
 const shipping = (order: ReceiptOrder) => {
   if (typeof order.shippingCost === "number") {
     return Math.max(order.shippingCost, 0);
@@ -64,7 +70,7 @@ function shell(title: string, css: string, body: string) {
 </html>`;
 }
 
-export function buildThermalReceipt(order: ReceiptOrder, shopName: string, sender?: SenderDetails) {
+export function buildThermalReceipt(order: ReceiptOrder, shopName: string, _sender?: SenderDetails) {
   const rows = order.items
     .map(
       (item) => `
@@ -79,23 +85,30 @@ export function buildThermalReceipt(order: ReceiptOrder, shopName: string, sende
   return shell(
     `Receipt ${order.id}`,
     `
-    @page { size: 80mm auto; margin: 0; }
-    body { background: #fff; color: #000; }
-    .page { width: 76mm; margin: 0 auto; padding: 6mm 4mm; font-family: 'JetBrains Mono', monospace; font-size: 10pt; }
+    @page { size: A4 portrait; margin: 15mm 20mm; }
+    body { background: #f8fafc; color: #000; }
+    .page-wrapper { display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 20px 0; }
+    .page { width: 100%; max-width: 420px; background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 10mm 8mm; font-family: 'JetBrains Mono', monospace; font-size: 11pt; }
     .center { text-align: center; }
-    .section { padding: 3mm 0; margin-bottom: 2mm; border-bottom: 1px dashed #9ca3af; }
-    .brand { font-size: 18pt; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
-    .subtle { color: #52525b; font-size: 8pt; }
-    .row { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 1mm; }
-    .grand { padding-top: 2mm; border-top: 2px solid #000; font-size: 11pt; }
+    .section { padding: 4mm 0; margin-bottom: 3mm; border-bottom: 1px dashed #9ca3af; }
+    .brand { font-size: 22pt; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+    .subtle { color: #52525b; font-size: 9pt; }
+    .row { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 2mm; font-size: 11pt; }
+    .grand { padding-top: 3mm; border-top: 2px solid #000; font-size: 13pt; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 1.5mm 0; text-align: left; vertical-align: top; }
-    th { border-bottom: 1px solid #000; color: #52525b; font-size: 7.5pt; text-transform: uppercase; }
-    td { border-bottom: 1px dotted #d4d4d8; }
-    .sku { display: block; margin-top: 0.5mm; color: #71717a; font-size: 7.5pt; }
+    th, td { padding: 2.5mm 0; text-align: left; vertical-align: top; }
+    th { border-bottom: 1px solid #000; color: #52525b; font-size: 9pt; text-transform: uppercase; }
+    td { border-bottom: 1px dotted #d4d4d8; font-size: 11pt; }
+    .sku { display: block; margin-top: 1mm; color: #71717a; font-size: 8.5pt; }
     .right { text-align: right; white-space: nowrap; }
+    @media print {
+      body { background: #fff; }
+      .page-wrapper { min-height: unset; padding: 0; }
+      .page { border: none; max-width: 100%; }
+    }
     `,
     `
+    <div class="page-wrapper">
     <main class="page">
       <section class="section center">
         <div class="brand">${esc(shopName || "Flypick")}</div>
@@ -112,11 +125,6 @@ export function buildThermalReceipt(order: ReceiptOrder, shopName: string, sende
         <div class="subtle">${esc(order.email)}</div>
         ${clean(order.phone) ? `<div class="subtle">${esc(order.phone)}</div>` : ""}
       </section>
-      ${sender && (clean(sender.name) || clean(sender.phone) || clean(sender.address)) ? `
-      <section class="section">
-        <div>Seller</div>
-        <div class="subtle">${[clean(sender.name), clean(sender.phone), ...clean(sender.address).split(/\r?\n/).map(clean)].filter(Boolean).map(esc).join("<br />")}</div>
-      </section>` : ""}
       <section class="section">
         <table>
           <thead><tr><th>Item</th><th class="right">Qty</th><th class="right">Total</th></tr></thead>
@@ -129,11 +137,12 @@ export function buildThermalReceipt(order: ReceiptOrder, shopName: string, sende
         <div class="row grand"><span>Total</span><strong>${money(order.amount)}</strong></div>
       </section>
       <div class="center subtle">Keep this receipt for your records.</div>
-    </main>`
+    </main>
+    </div>`
   );
 }
 
-export function buildA4Invoice(order: ReceiptOrder, shopName: string, sender?: SenderDetails) {
+export function buildA4Invoice(order: ReceiptOrder, shopName: string, _sender?: SenderDetails) {
   const rows = order.items
     .map(
       (item, index) => `
@@ -159,10 +168,6 @@ export function buildA4Invoice(order: ReceiptOrder, shopName: string, sender?: S
     .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 6mm; margin-top: 3mm; }
     .meta-grid span, .label { display: block; color: #94a3b8; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5mm; }
     .meta-grid strong { font-family: 'JetBrains Mono', monospace; font-size: 10pt; }
-    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; margin-bottom: 6mm; }
-    .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 3mm; padding: 5mm; }
-    .title { font-size: 12pt; font-weight: 700; margin-bottom: 1mm; }
-    .copy { color: #64748b; line-height: 1.6; font-size: 9pt; }
     .chips { display: flex; gap: 2mm; flex-wrap: wrap; margin-bottom: 6mm; }
     .chip { display: inline-flex; align-items: center; padding: 1.5mm 4mm; border: 1px solid #cbd5e1; border-radius: 999px; background: #fff; color: #334155; font-size: 8pt; font-weight: 600; }
     .chip-dark { background: #0f172a; color: #fff; border-color: #0f172a; }
@@ -199,10 +204,6 @@ export function buildA4Invoice(order: ReceiptOrder, shopName: string, sender?: S
           </div>
         </div>
       </header>
-      <section class="cards">
-        <article class="card"><div class="label">From</div><div class="title">${esc(clean(sender?.name) || shopName || "Flypick")}</div><div class="copy">${sender && (clean(sender.phone) || clean(sender.address) || clean(sender.email)) ? [clean(sender.phone), ...clean(sender.address).split(/\r?\n/).map(clean), clean(sender.email)].filter(Boolean).map(esc).join("<br />") : "Powered by Flypick Marketplace"}</div></article>
-        <article class="card"><div class="label">Bill To</div><div class="title">${esc(order.customer)}</div><div class="copy">${esc(order.email)}${clean(order.phone) ? `<br />${esc(order.phone)}` : ""}</div></article>
-      </section>
       <section class="chips">
         <span class="chip chip-dark">${esc(order.payment)}</span>
         <span class="chip">${esc(order.paymentMethod)}</span>
