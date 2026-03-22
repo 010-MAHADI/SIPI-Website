@@ -3,6 +3,16 @@ import api from '@/lib/api';
 
 interface SellerProfile {
     status?: string;
+    phone?: string | null;
+    sender_name?: string | null;
+    mobile_no?: string | null;
+    village?: string | null;
+    post_office?: string | null;
+    post_code?: string | null;
+    upazila?: string | null;
+    zilla?: string | null;
+    location?: string | null;
+    address?: string | null;
 }
 
 interface User {
@@ -20,6 +30,7 @@ interface AuthContextType {
     isLoading: boolean;
     login: (tokens: { access: string; refresh?: string }) => Promise<User | null>;
     logout: () => void;
+    refreshUser: () => Promise<User | null>;
     isAdmin: boolean;
     isSeller: boolean;
 }
@@ -54,6 +65,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw lastError;
     };
 
+    const refreshUser = async () => {
+        try {
+            const profile = await fetchProfileWithRetry();
+            setUser(profile);
+            return profile;
+        } catch (error) {
+            console.error("Failed to refresh user profile:", error);
+            throw error;
+        }
+    };
+
     useEffect(() => {
         const initAuth = async () => {
             const token = localStorage.getItem('token') || localStorage.getItem('access_token');
@@ -84,8 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             localStorage.setItem('refresh_token', tokens.refresh);
         }
 
-        const profile = await fetchProfileWithRetry();
-        setUser(profile);
+        const profile = await refreshUser();
         return profile;
     };
 
@@ -103,6 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isLoading,
             login,
             logout,
+            refreshUser,
             isAdmin: !!user && (user.role === "Admin" || user.is_superuser === true),
             isSeller: !!user && user.role === "Seller",
         }}>

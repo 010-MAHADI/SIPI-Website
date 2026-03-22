@@ -57,7 +57,7 @@ function shell(title: string, css: string, body: string) {
 </html>`;
 }
 
-export function buildThermalReceipt(order: ReceiptOrder, shopName: string) {
+export function buildThermalReceipt(order: ReceiptOrder, shopName: string, sender?: SenderDetails) {
   const rows = order.items
     .map(
       (item) => `
@@ -105,6 +105,11 @@ export function buildThermalReceipt(order: ReceiptOrder, shopName: string) {
         <div class="subtle">${esc(order.email)}</div>
         ${clean(order.phone) ? `<div class="subtle">${esc(order.phone)}</div>` : ""}
       </section>
+      ${sender && (clean(sender.name) || clean(sender.phone) || clean(sender.address)) ? `
+      <section class="section">
+        <div>Seller</div>
+        <div class="subtle">${[clean(sender.name), clean(sender.phone), ...clean(sender.address).split(/\r?\n/).map(clean)].filter(Boolean).map(esc).join("<br />")}</div>
+      </section>` : ""}
       <section class="section">
         <table>
           <thead><tr><th>Item</th><th class="right">Qty</th><th class="right">Total</th></tr></thead>
@@ -121,7 +126,7 @@ export function buildThermalReceipt(order: ReceiptOrder, shopName: string) {
   );
 }
 
-export function buildA4Invoice(order: ReceiptOrder, shopName: string) {
+export function buildA4Invoice(order: ReceiptOrder, shopName: string, sender?: SenderDetails) {
   const address = [
     clean(order.address.street),
     [clean(order.address.city), clean(order.address.state), clean(order.address.zip)].filter(Boolean).join(", "),
@@ -196,7 +201,7 @@ export function buildA4Invoice(order: ReceiptOrder, shopName: string) {
         </div>
       </header>
       <section class="cards">
-        <article class="card"><div class="label">From</div><div class="title">${esc(shopName || "Flypick")}</div><div class="copy">Powered by Flypick Marketplace</div></article>
+        <article class="card"><div class="label">From</div><div class="title">${esc(clean(sender?.name) || shopName || "Flypick")}</div><div class="copy">${sender && (clean(sender.phone) || clean(sender.address) || clean(sender.email)) ? [clean(sender.phone), ...clean(sender.address).split(/\r?\n/).map(clean), clean(sender.email)].filter(Boolean).map(esc).join("<br />") : "Powered by Flypick Marketplace"}</div></article>
         <article class="card"><div class="label">Bill To</div><div class="title">${esc(order.customer)}</div><div class="copy">${esc(order.email)}${clean(order.phone) ? `<br />${esc(order.phone)}` : ""}<br />${address}</div></article>
       </section>
       <section class="chips">
@@ -269,7 +274,7 @@ export function buildShippingLabel(order: ReceiptOrder, shopName: string, sender
   );
 }
 
-export function buildPackingSlip(order: ReceiptOrder, shopName: string) {
+export function buildPackingSlip(order: ReceiptOrder, shopName: string, sender?: SenderDetails) {
   const address = [clean(order.address.street), [clean(order.address.city), clean(order.address.state), clean(order.address.zip)].filter(Boolean).join(", "), clean(order.address.country)]
     .filter(Boolean)
     .map(esc)
@@ -316,7 +321,7 @@ export function buildPackingSlip(order: ReceiptOrder, shopName: string) {
     <main>
       <header class="header"><div><div class="shop">${esc(shopName || "Flypick")}</div><div class="muted">Packing Slip</div></div><div class="meta"><div class="order">${esc(order.id)}</div><div class="date">${esc(order.date)}</div></div></header>
       <section class="grid">
-        <article class="box"><div class="label">Customer</div><div class="value">${esc(order.customer)}</div><div class="copy">${esc(order.email)}${clean(order.phone) ? `<br />${esc(order.phone)}` : ""}</div></article>
+        <article class="box"><div class="label">Seller</div><div class="value">${esc(clean(sender?.name) || shopName || "Flypick")}</div><div class="copy">${sender && (clean(sender?.phone) || clean(sender?.address) || clean(sender?.email)) ? [clean(sender?.phone), ...clean(sender?.address).split(/\r?\n/).map(clean), clean(sender?.email)].filter(Boolean).map(esc).join("<br />") : "Powered by Flypick Marketplace"}</div></article>
         <article class="box"><div class="label">Ship To</div><div class="value">${esc(order.customer)}</div><div class="copy">${address}</div></article>
       </section>
       <div class="muted" style="margin-bottom:2mm">Items to Pack (${order.items.length} lines / ${units} units)</div>

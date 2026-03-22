@@ -22,9 +22,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
-import type { ReceiptOrder } from "@/lib/receiptUtils";
+import type { ReceiptOrder, SenderDetails } from "@/lib/receiptUtils";
 import { toast } from "sonner";
 import { useOrders, useUpdateOrderStatus } from "@/hooks/useOrders";
+import { useAuth } from "@/context/AuthContext";
 import { useShop } from "@/context/ShopContext";
 import { useReturns, useUpdateReturnStatus } from "@/hooks/useReturns";
 
@@ -761,6 +762,7 @@ function buildOrderDocumentHtml({
 }
 
 export default function Orders() {
+  const { user } = useAuth();
   const { currentShop } = useShop();
   const selectedShopId = currentShop?.id ? Number(currentShop.id) : undefined;
   const { data: fetchedOrders, isLoading } = useOrders(selectedShopId);
@@ -907,6 +909,26 @@ export default function Orders() {
     }
     return counts;
   }, [orders, returnRequests]);
+
+  const receiptSender = useMemo<SenderDetails>(() => {
+    const profile = user?.seller_profile;
+    const senderName = (profile?.sender_name || "").trim() || currentShop?.name || user?.username || "Flypick";
+    const phone = (profile?.mobile_no || profile?.phone || "").trim();
+    const addressLines = [
+      (profile?.village || "").trim(),
+      (profile?.post_office || "").trim() ? `Post Office: ${(profile?.post_office || "").trim()}` : "",
+      (profile?.post_code || "").trim() ? `Post Code: ${(profile?.post_code || "").trim()}` : "",
+      [(profile?.upazila || "").trim(), (profile?.zilla || "").trim()].filter(Boolean).join(", "),
+    ].filter(Boolean);
+    const legacyAddress = (profile?.address || "").trim();
+
+    return {
+      name: senderName,
+      phone,
+      address: addressLines.length ? addressLines.join("\n") : legacyAddress,
+      email: user?.email || "",
+    };
+  }, [currentShop?.name, user]);
 
   const now = new Date();
   const todayStr = now.toISOString().split("T")[0];
@@ -1806,6 +1828,7 @@ export default function Orders() {
           order={receiptOrder}
           shopName={currentShop?.name || "Flypick"}
           shopId={selectedShopId}
+          defaultSender={receiptSender}
         />
 
         {/* Return / Refund Dialog */}

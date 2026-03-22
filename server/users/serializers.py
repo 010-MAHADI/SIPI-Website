@@ -17,6 +17,13 @@ class SellerProfileSerializer(serializers.ModelSerializer):
         model = SellerProfile
         fields = [
             "phone",
+            "sender_name",
+            "mobile_no",
+            "village",
+            "post_office",
+            "post_code",
+            "upazila",
+            "zilla",
             "avatar",
             "location",
             "address",
@@ -43,7 +50,7 @@ class SellerSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    seller_profile = SellerProfileSerializer(read_only=True)
+    seller_profile = SellerProfileSerializer(required=False)
     shop_count = serializers.SerializerMethodField()
     max_shops = serializers.SerializerMethodField()
 
@@ -59,12 +66,28 @@ class UserSerializer(serializers.ModelSerializer):
             "shop_count",
             "max_shops",
         ]
+        read_only_fields = ["id", "role", "is_superuser", "shop_count", "max_shops"]
 
     def get_shop_count(self, obj):
         return obj.shops.count()
 
     def get_max_shops(self, obj):
         return 5 if obj.role == "Seller" else None
+
+    def update(self, instance, validated_data):
+        seller_profile_data = validated_data.pop("seller_profile", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if seller_profile_data is not None and instance.role == "Seller":
+            profile, _ = SellerProfile.objects.get_or_create(user=instance)
+            for attr, value in seller_profile_data.items():
+                setattr(profile, attr, value)
+            profile.save()
+
+        return instance
 
 
 class CustomerProfileSerializer(serializers.ModelSerializer):

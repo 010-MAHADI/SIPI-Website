@@ -31,6 +31,7 @@ interface ReceiptDialogProps {
   order: ReceiptOrder | null;
   shopName: string;
   shopId?: number;
+  defaultSender?: SenderDetails;
 }
 
 type ReceiptDocType = "thermal" | "invoice" | "label" | "packing";
@@ -67,7 +68,7 @@ function saveSender(shopId: number | undefined, sender: SenderDetails) {
   window.localStorage.setItem(getSenderStorageKey(shopId), JSON.stringify(sender));
 }
 
-export function ReceiptDialog({ open, onClose, order, shopName, shopId }: ReceiptDialogProps) {
+export function ReceiptDialog({ open, onClose, order, shopName, shopId, defaultSender }: ReceiptDialogProps) {
   const [step, setStep] = useState<"pick" | "label-details">("pick");
   const [sender, setSender] = useState<SenderDetails>({ name: "", phone: "", address: "", email: "" });
   const [receiver, setReceiver] = useState({ name: "", phone: "", address: "" });
@@ -79,11 +80,11 @@ export function ReceiptDialog({ open, onClose, order, shopName, shopId }: Receip
     }
 
     const savedSender = loadSender(shopId);
-    setSender(savedSender.name || savedSender.phone || savedSender.address || savedSender.email ? savedSender : {
-      name: shopName || "",
-      phone: "",
-      address: "",
-      email: "",
+    setSender({
+      name: defaultSender?.name || savedSender.name || shopName || "",
+      phone: defaultSender?.phone || savedSender.phone || "",
+      address: defaultSender?.address || savedSender.address || "",
+      email: defaultSender?.email || savedSender.email || "",
     });
 
     if (!order) {
@@ -102,7 +103,7 @@ export function ReceiptDialog({ open, onClose, order, shopName, shopId }: Receip
       phone: order.phone,
       address: lines.join("\n"),
     });
-  }, [open, order, shopId, shopName]);
+  }, [defaultSender, open, order, shopId, shopName]);
 
   if (!order) {
     return null;
@@ -118,16 +119,16 @@ export function ReceiptDialog({ open, onClose, order, shopName, shopId }: Receip
 
     switch (type) {
       case "thermal":
-        html = buildThermalReceipt(order, shopName);
+        html = buildThermalReceipt(order, shopName, sender);
         break;
       case "invoice":
-        html = buildA4Invoice(order, shopName);
+        html = buildA4Invoice(order, shopName, sender);
         break;
       case "label":
         html = buildShippingLabel(order, shopName, sender, receiver);
         break;
       case "packing":
-        html = buildPackingSlip(order, shopName);
+        html = buildPackingSlip(order, shopName, sender);
         break;
     }
 

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { MapPin } from "lucide-react";
 import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,60 +11,171 @@ import { useAuth } from "@/context/AuthContext";
 import { useShop } from "@/context/ShopContext";
 import api from "@/lib/api";
 
+interface SellerAddressForm {
+  name: string;
+  village: string;
+  postOffice: string;
+  postCode: string;
+  upazila: string;
+  zilla: string;
+  mobileNo: string;
+}
+
+const emptySellerAddress: SellerAddressForm = {
+  name: "",
+  village: "",
+  postOffice: "",
+  postCode: "",
+  upazila: "",
+  zilla: "",
+  mobileNo: "",
+};
+
+const trim = (value?: string | null) => (value || "").trim();
+
 export default function Settings() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isSeller, refreshUser } = useAuth();
   const { currentShop, updateShop } = useShop();
   const [storeName, setStoreName] = useState("Flypick");
-  const [storeEmail, setStoreEmail] = useState(user?.email || "admin@flypick.com");
+  const [storeEmail, setStoreEmail] = useState(user?.email || "");
   const [storeDescription, setStoreDescription] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const [sellerAddress, setSellerAddress] = useState<SellerAddressForm>(emptySellerAddress);
+  const [isSavingGeneral, setIsSavingGeneral] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
 
   useEffect(() => {
-    if (currentShop) {
-      setStoreName(currentShop.name);
-      setStoreDescription(currentShop.description || "");
-    }
-  }, [currentShop]);
-
-  useEffect(() => {
-    if (user?.email) {
-      setStoreEmail(user.email);
-    }
-  }, [user?.email]);
-
-  const saveGeneral = async () => {
-    if (!currentShop?.id) {
-      toast.error("No shop selected.");
+    if (!currentShop) {
       return;
     }
 
-    setIsSaving(true);
+    setStoreName(currentShop.name);
+    setStoreDescription(currentShop.description || "");
+  }, [currentShop]);
+
+  useEffect(() => {
+    setStoreEmail(user?.email || "");
+
+    if (!user?.seller_profile) {
+      setSellerAddress(emptySellerAddress);
+      return;
+    }
+
+    setSellerAddress({
+      name: trim(user.seller_profile.sender_name) || trim(user.username) || trim(currentShop?.name),
+      village: trim(user.seller_profile.village),
+      postOffice: trim(user.seller_profile.post_office),
+      postCode: trim(user.seller_profile.post_code),
+      upazila: trim(user.seller_profile.upazila),
+      zilla: trim(user.seller_profile.zilla),
+      mobileNo: trim(user.seller_profile.mobile_no) || trim(user.seller_profile.phone),
+    });
+  }, [currentShop?.name, user]);
+
+  const formattedSellerAddress = useMemo(() => {
+    return [
+      trim(sellerAddress.village),
+      trim(sellerAddress.postOffice) ? `Post Office: ${trim(sellerAddress.postOffice)}` : "",
+      trim(sellerAddress.postCode) ? `Post Code: ${trim(sellerAddress.postCode)}` : "",
+      [trim(sellerAddress.upazila), trim(sellerAddress.zilla)].filter(Boolean).join(", "),
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }, [sellerAddress]);
+
+  const updateSellerAddressField = (field: keyof SellerAddressForm, value: string) => {
+    setSellerAddress((current) => ({ ...current, [field]: value }));
+  };
+
+  const saveGeneral = async () => {
+    setIsSavingGeneral(true);
+
     try {
-      const response = await api.patch(`/products/shops/${currentShop.id}/`, {
-        name: storeName,
-        description: storeDescription,
-      });
-      updateShop(currentShop.id, {
-        name: response.data?.name || storeName,
-        description: response.data?.description || storeDescription,
-      });
-      toast.success(isAdmin ? "Flypick shop name updated." : "Shop settings updated.");
+      const requests: Promise<any>[] = [
+        api.patch("/users/profile/", {
+          email: trim(storeEmail),
+        }),
+      ];
+
+      if (currentShop?.id) {
+        requests.push(
+          api.patch(`/products/shops/${currentShop.id}/`, {
+            name: trim(storeName),
+            description: trim(storeDescription),
+          })
+        );
+      }
+
+      const responses = await Promise.all(requests);
+      const shopResponse = currentShop?.id ? responses[responses.length - 1] : null;
+
+      if (currentShop?.id && shopResponse) {
+        updateShop(currentShop.id, {
+          name: shopResponse.data?.name || trim(storeName),
+          description: shopResponse.data?.description || trim(storeDescription),
+        });
+      }
+
+      await refreshUser();
+      toast.success(isAdmin ? "Settings synced with database." : "Store settings synced with database.");
     } catch (error: any) {
-      toast.error(error?.response?.data?.detail || "Failed to save settings.");
+      const data = error?.response?.data;
+      const firstFieldError =
+        typeof data === "object" && data
+          ? Object.values(data).flat().find(Boolean)
+          : null;
+      toast.error(typeof firstFieldError === "string" ? firstFieldError : data?.detail || "Failed to save settings.");
     } finally {
-      setIsSaving(false);
+      setIsSavingGeneral(false);
+    }
+  };
+
+  const saveSellerAddress = async () => {
+    if (!isSeller) {
+      return;
+    }
+
+    if (!trim(sellerAddress.name) || !trim(sellerAddress.mobileNo)) {
+      toast.error("Seller name and mobile number are required.");
+      return;
+    }
+
+    setIsSavingAddress(true);
+
+    try {
+      await api.patch("/users/profile/", {
+        seller_profile: {
+          sender_name: trim(sellerAddress.name),
+          mobile_no: trim(sellerAddress.mobileNo),
+          phone: trim(sellerAddress.mobileNo),
+          village: trim(sellerAddress.village),
+          post_office: trim(sellerAddress.postOffice),
+          post_code: trim(sellerAddress.postCode),
+          upazila: trim(sellerAddress.upazila),
+          zilla: trim(sellerAddress.zilla),
+          location: [trim(sellerAddress.upazila), trim(sellerAddress.zilla)].filter(Boolean).join(", "),
+          address: formattedSellerAddress,
+        },
+      });
+
+      await refreshUser();
+      toast.success("Seller address saved. It will now be used in print and download documents.");
+    } catch (error: any) {
+      const data = error?.response?.data;
+      const firstFieldError =
+        typeof data === "object" && data
+          ? Object.values(data).flat().find(Boolean)
+          : null;
+      toast.error(typeof firstFieldError === "string" ? firstFieldError : data?.detail || "Failed to save seller address.");
+    } finally {
+      setIsSavingAddress(false);
     }
   };
 
   return (
-    <div className="space-y-6 max-w-3xl animate-fade-in">
+    <div className="max-w-4xl space-y-6 animate-fade-in">
       <div className="page-header">
         <h1>Settings</h1>
-        <p>
-          {isAdmin
-            ? "Manage main admin account settings and Flypick shop name"
-            : "Manage your shop and account settings"}
-        </p>
+        <p>{isAdmin ? "Manage main admin account settings and shop information" : "Manage your shop, account, and seller address details"}</p>
       </div>
 
       <Tabs defaultValue="general">
@@ -74,34 +185,90 @@ export default function Settings() {
           <TabsTrigger value="security" className="rounded-md">Security</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="general" className="space-y-6 mt-6">
+        <TabsContent value="general" className="mt-6 space-y-6">
           <div className="stat-card space-y-5">
             <h3 className="section-title">Store Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>{isAdmin ? "Main Shop Name" : "Shop Name"}</Label>
-                <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} className="rounded-lg" />
+                <Input value={storeName} onChange={(event) => setStoreName(event.target.value)} className="rounded-lg" />
               </div>
               <div className="space-y-2">
-                <Label>Contact Email</Label>
-                <Input value={storeEmail} onChange={(e) => setStoreEmail(e.target.value)} className="rounded-lg" />
+                <Label>Account Email</Label>
+                <Input value={storeEmail} onChange={(event) => setStoreEmail(event.target.value)} className="rounded-lg" />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Store Description</Label>
-              <Textarea
-                value={storeDescription}
-                onChange={(e) => setStoreDescription(e.target.value)}
-                className="rounded-lg"
-              />
+              <Textarea value={storeDescription} onChange={(event) => setStoreDescription(event.target.value)} className="rounded-lg" />
             </div>
-            <Button onClick={saveGeneral} className="rounded-lg" disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save Changes"}
+            <Button onClick={saveGeneral} className="rounded-lg" disabled={isSavingGeneral}>
+              {isSavingGeneral ? "Saving..." : "Save Changes"}
             </Button>
           </div>
+
+          {isSeller ? (
+            <div className="stat-card space-y-5">
+              <div className="flex items-start gap-3">
+                <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="section-title">Seller Address</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    This address is saved in the database and used automatically in the Print or Download Documents flow.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Name</Label>
+                  <Input value={sellerAddress.name} onChange={(event) => updateSellerAddressField("name", event.target.value)} className="rounded-lg" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Mobile No</Label>
+                  <Input value={sellerAddress.mobileNo} onChange={(event) => updateSellerAddressField("mobileNo", event.target.value)} className="rounded-lg" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Village</Label>
+                  <Input value={sellerAddress.village} onChange={(event) => updateSellerAddressField("village", event.target.value)} className="rounded-lg" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Post Office</Label>
+                  <Input value={sellerAddress.postOffice} onChange={(event) => updateSellerAddressField("postOffice", event.target.value)} className="rounded-lg" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Post Code</Label>
+                  <Input value={sellerAddress.postCode} onChange={(event) => updateSellerAddressField("postCode", event.target.value)} className="rounded-lg" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Upazila</Label>
+                  <Input value={sellerAddress.upazila} onChange={(event) => updateSellerAddressField("upazila", event.target.value)} className="rounded-lg" />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Zilla</Label>
+                  <Input value={sellerAddress.zilla} onChange={(event) => updateSellerAddressField("zilla", event.target.value)} className="rounded-lg" />
+                </div>
+              </div>
+
+              <div className="rounded-xl border bg-muted/20 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Preview</p>
+                <div className="mt-2 space-y-1 text-sm">
+                  <p className="font-semibold">{sellerAddress.name || "Seller name"}</p>
+                  <p>{sellerAddress.mobileNo || "Mobile number"}</p>
+                  <pre className="whitespace-pre-wrap font-sans text-sm text-muted-foreground">{formattedSellerAddress || "Seller address will appear here."}</pre>
+                </div>
+              </div>
+
+              <Button onClick={saveSellerAddress} className="rounded-lg" disabled={isSavingAddress}>
+                {isSavingAddress ? "Saving..." : "Save Seller Address"}
+              </Button>
+            </div>
+          ) : null}
         </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-6 mt-6">
+        <TabsContent value="notifications" className="mt-6 space-y-6">
           <div className="stat-card space-y-5">
             <h3 className="section-title">Email Notifications</h3>
             {[
@@ -114,7 +281,7 @@ export default function Settings() {
               <div key={item.label} className="flex items-center justify-between py-1">
                 <div>
                   <p className="text-sm font-medium">{item.label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{item.desc}</p>
                 </div>
                 <Switch defaultChecked={item.default} />
               </div>
@@ -122,7 +289,7 @@ export default function Settings() {
           </div>
         </TabsContent>
 
-        <TabsContent value="security" className="space-y-6 mt-6">
+        <TabsContent value="security" className="mt-6 space-y-6">
           <div className="stat-card space-y-5">
             <h3 className="section-title">Change Password</h3>
             <div className="space-y-2"><Label>Current Password</Label><Input type="password" className="rounded-lg" /></div>
@@ -135,7 +302,7 @@ export default function Settings() {
             <div className="flex items-center justify-between py-1">
               <div>
                 <p className="text-sm font-medium">Enable 2FA</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Add an extra layer of security</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Add an extra layer of security</p>
               </div>
               <Switch />
             </div>
