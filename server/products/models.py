@@ -36,6 +36,13 @@ class Shop(models.Model):
     category = models.CharField(max_length=255)  # Will be changed to ForeignKey later
     category_fk = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='shops_new')
     description = models.TextField(blank=True, null=True)
+    sender_name = models.CharField(max_length=255, blank=True, null=True)
+    sender_mobile_no = models.CharField(max_length=20, blank=True, null=True)
+    sender_village = models.CharField(max_length=255, blank=True, null=True)
+    sender_post_office = models.CharField(max_length=255, blank=True, null=True)
+    sender_post_code = models.CharField(max_length=20, blank=True, null=True)
+    sender_upazila = models.CharField(max_length=255, blank=True, null=True)
+    sender_zilla = models.CharField(max_length=255, blank=True, null=True)
     revenue = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     commission = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)

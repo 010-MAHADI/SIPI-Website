@@ -9,6 +9,13 @@ export interface Shop {
   logo: string;
   category: string;
   description: string;
+  senderName?: string;
+  senderMobileNo?: string;
+  senderVillage?: string;
+  senderPostOffice?: string;
+  senderPostCode?: string;
+  senderUpazila?: string;
+  senderZilla?: string;
   status: "active" | "inactive";
   createdAt: string;
 }
@@ -32,6 +39,13 @@ const mapShop = (shop: any): Shop => ({
   logo: "🏪",
   category: shop?.category || "General",
   description: shop?.description || "",
+  senderName: shop?.sender_name || "",
+  senderMobileNo: shop?.sender_mobile_no || "",
+  senderVillage: shop?.sender_village || "",
+  senderPostOffice: shop?.sender_post_office || "",
+  senderPostCode: shop?.sender_post_code || "",
+  senderUpazila: shop?.sender_upazila || "",
+  senderZilla: shop?.sender_zilla || "",
   status: shop?.status === "inactive" ? "inactive" : "active",
   createdAt: shop?.createdDate || new Date().toISOString(),
 });

@@ -915,37 +915,35 @@ export default function Orders() {
   }, [orders, returnRequests]);
 
   const receiptSender = useMemo<SenderDetails>(() => {
-    const profile = user?.seller_profile;
-    const senderName = (profile?.sender_name || "").trim() || currentShop?.name || user?.username || "Flypick";
-    const phone = (profile?.mobile_no || profile?.phone || "").trim();
+    const senderName = (currentShop?.senderName || "").trim() || currentShop?.name || user?.username || "Flypick";
+    const phone = (currentShop?.senderMobileNo || "").trim();
     const addressLines = [
-      (profile?.village || "").trim(),
-      (profile?.post_office || "").trim() ? `Post Office: ${(profile?.post_office || "").trim()}` : "",
-      (profile?.post_code || "").trim() ? `Post Code: ${(profile?.post_code || "").trim()}` : "",
-      [(profile?.upazila || "").trim(), (profile?.zilla || "").trim()].filter(Boolean).join(", "),
+      (currentShop?.senderVillage || "").trim(),
+      (currentShop?.senderPostOffice || "").trim() ? `Post Office: ${(currentShop?.senderPostOffice || "").trim()}` : "",
+      (currentShop?.senderPostCode || "").trim() ? `Post Code: ${(currentShop?.senderPostCode || "").trim()}` : "",
+      [(currentShop?.senderUpazila || "").trim(), (currentShop?.senderZilla || "").trim()].filter(Boolean).join(", "),
     ].filter(Boolean);
-    const legacyAddress = (profile?.address || "").trim();
 
     return {
       name: senderName,
       phone,
-      address: addressLines.length ? addressLines.join("\n") : legacyAddress,
+      address: addressLines.join("\n"),
       email: user?.email || "",
     };
-  }, [currentShop?.name, user]);
+  }, [currentShop, user]);
 
   const receiptSenderFields = useMemo(
     () => ({
-      name: (user?.seller_profile?.sender_name || "").trim() || currentShop?.name || user?.username || "Flypick",
-      phone: (user?.seller_profile?.mobile_no || user?.seller_profile?.phone || "").trim(),
-      village: (user?.seller_profile?.village || "").trim(),
-      postOffice: (user?.seller_profile?.post_office || "").trim(),
-      postCode: (user?.seller_profile?.post_code || "").trim(),
-      upazila: (user?.seller_profile?.upazila || "").trim(),
-      zilla: (user?.seller_profile?.zilla || "").trim(),
+      name: (currentShop?.senderName || "").trim() || currentShop?.name || user?.username || "Flypick",
+      phone: (currentShop?.senderMobileNo || "").trim(),
+      village: (currentShop?.senderVillage || "").trim(),
+      postOffice: (currentShop?.senderPostOffice || "").trim(),
+      postCode: (currentShop?.senderPostCode || "").trim(),
+      upazila: (currentShop?.senderUpazila || "").trim(),
+      zilla: (currentShop?.senderZilla || "").trim(),
       email: user?.email || "",
     }),
-    [currentShop?.name, user]
+    [currentShop, user]
   );
 
   const now = new Date();

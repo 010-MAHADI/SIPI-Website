@@ -42,12 +42,7 @@ export default function Settings() {
   const [sellerAddress, setSellerAddress] = useState<SellerAddressForm>(emptySellerAddress);
   const [isSavingGeneral, setIsSavingGeneral] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
-  const showSellerAddressSection = !isAdmin && (
-    isSeller ||
-    user?.role?.toLowerCase?.() === "seller" ||
-    !!user?.seller_profile ||
-    !!currentShop
-  );
+  const showSellerAddressSection = !!currentShop;
 
   useEffect(() => {
     if (!currentShop) {
@@ -59,23 +54,25 @@ export default function Settings() {
   }, [currentShop]);
 
   useEffect(() => {
-    setStoreEmail(user?.email || "");
-
-    if (!user?.seller_profile) {
+    if (!currentShop) {
       setSellerAddress(emptySellerAddress);
       return;
     }
 
     setSellerAddress({
-      name: trim(user.seller_profile.sender_name) || trim(user.username) || trim(currentShop?.name),
-      village: trim(user.seller_profile.village),
-      postOffice: trim(user.seller_profile.post_office),
-      postCode: trim(user.seller_profile.post_code),
-      upazila: trim(user.seller_profile.upazila),
-      zilla: trim(user.seller_profile.zilla),
-      mobileNo: trim(user.seller_profile.mobile_no) || trim(user.seller_profile.phone),
+      name: trim(currentShop.senderName) || trim(currentShop.name),
+      village: trim(currentShop.senderVillage),
+      postOffice: trim(currentShop.senderPostOffice),
+      postCode: trim(currentShop.senderPostCode),
+      upazila: trim(currentShop.senderUpazila),
+      zilla: trim(currentShop.senderZilla),
+      mobileNo: trim(currentShop.senderMobileNo),
     });
-  }, [currentShop?.name, user]);
+  }, [currentShop]);
+
+  useEffect(() => {
+    setStoreEmail(user?.email || "");
+  }, [user?.email]);
 
   const formattedSellerAddress = useMemo(() => {
     return [
@@ -148,22 +145,31 @@ export default function Settings() {
     setIsSavingAddress(true);
 
     try {
-      await api.patch("/users/profile/", {
-        seller_profile: {
-          sender_name: trim(sellerAddress.name),
-          mobile_no: trim(sellerAddress.mobileNo),
-          phone: trim(sellerAddress.mobileNo),
-          village: trim(sellerAddress.village),
-          post_office: trim(sellerAddress.postOffice),
-          post_code: trim(sellerAddress.postCode),
-          upazila: trim(sellerAddress.upazila),
-          zilla: trim(sellerAddress.zilla),
-          location: [trim(sellerAddress.upazila), trim(sellerAddress.zilla)].filter(Boolean).join(", "),
-          address: formattedSellerAddress,
-        },
+      if (!currentShop?.id) {
+        toast.error("No shop selected.");
+        return;
+      }
+
+      const response = await api.patch(`/products/shops/${currentShop.id}/`, {
+        sender_name: trim(sellerAddress.name),
+        sender_mobile_no: trim(sellerAddress.mobileNo),
+        sender_village: trim(sellerAddress.village),
+        sender_post_office: trim(sellerAddress.postOffice),
+        sender_post_code: trim(sellerAddress.postCode),
+        sender_upazila: trim(sellerAddress.upazila),
+        sender_zilla: trim(sellerAddress.zilla),
       });
 
-      await refreshUser();
+      updateShop(currentShop.id, {
+        senderName: response.data?.sender_name || trim(sellerAddress.name),
+        senderMobileNo: response.data?.sender_mobile_no || trim(sellerAddress.mobileNo),
+        senderVillage: response.data?.sender_village || trim(sellerAddress.village),
+        senderPostOffice: response.data?.sender_post_office || trim(sellerAddress.postOffice),
+        senderPostCode: response.data?.sender_post_code || trim(sellerAddress.postCode),
+        senderUpazila: response.data?.sender_upazila || trim(sellerAddress.upazila),
+        senderZilla: response.data?.sender_zilla || trim(sellerAddress.zilla),
+      });
+
       toast.success("Seller address saved. It will now be used in print and download documents.");
     } catch (error: any) {
       const data = error?.response?.data;
