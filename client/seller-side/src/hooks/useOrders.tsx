@@ -26,6 +26,9 @@ export interface Order {
     date: string;
     status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
     payment_status: string;
+    subtotal?: number;
+    shipping_cost?: number;
+    discount?: number;
     total: number;
     paymentMethod: string;
     items: OrderItemApi[];
@@ -82,6 +85,9 @@ export const useOrders = (shopId?: string | number) => {
                         date: new Date(order.created_at).toLocaleDateString(),
                         status: mapStatus(order.status),
                         payment_status: order.payment_status || "pending",
+                        subtotal: parseFloat(order.subtotal) || 0,
+                        shipping_cost: parseFloat(order.shipping_cost) || 0,
+                        discount: parseFloat(order.discount) || 0,
                         total: parseFloat(order.total_amount) || 0,
                         paymentMethod: order.payment_method || "Unknown",
                         items: Array.isArray(order.items) ? order.items : [],

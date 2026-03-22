@@ -6,6 +6,8 @@ export interface ReceiptOrder {
   phone: string;
   items: Array<{ name: string; sku: string; qty: number; price: number; imageUrl?: string }>;
   amount: number;
+  shippingCost?: number;
+  discount?: number;
   status: string;
   payment: string;
   paymentMethod: string;
@@ -34,7 +36,12 @@ const esc = (value: string) =>
   (value || "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char] || char));
 
 const subtotal = (order: ReceiptOrder) => order.items.reduce((sum, item) => sum + item.qty * item.price, 0);
-const shipping = (order: ReceiptOrder) => Math.max(order.amount - subtotal(order), 0);
+const shipping = (order: ReceiptOrder) => {
+  if (typeof order.shippingCost === "number") {
+    return Math.max(order.shippingCost, 0);
+  }
+  return Math.max(order.amount - subtotal(order), 0);
+};
 
 function shell(title: string, css: string, body: string) {
   return `<!DOCTYPE html>
@@ -127,14 +134,6 @@ export function buildThermalReceipt(order: ReceiptOrder, shopName: string, sende
 }
 
 export function buildA4Invoice(order: ReceiptOrder, shopName: string, sender?: SenderDetails) {
-  const address = [
-    clean(order.address.street),
-    [clean(order.address.city), clean(order.address.state), clean(order.address.zip)].filter(Boolean).join(", "),
-    clean(order.address.country),
-  ]
-    .filter(Boolean)
-    .map(esc)
-    .join("<br />");
   const rows = order.items
     .map(
       (item, index) => `
@@ -195,14 +194,14 @@ export function buildA4Invoice(order: ReceiptOrder, shopName: string, sender?: S
           <div class="meta-grid">
             <div><span>Invoice #</span><strong>${esc(order.id)}</strong></div>
             <div><span>Date</span><strong>${esc(order.date)}</strong></div>
-            <div><span>Status</span><strong>${esc(order.status)}</strong></div>
             <div><span>Payment</span><strong>${esc(order.payment)}</strong></div>
+            <div><span>Method</span><strong>${esc(order.paymentMethod)}</strong></div>
           </div>
         </div>
       </header>
       <section class="cards">
         <article class="card"><div class="label">From</div><div class="title">${esc(clean(sender?.name) || shopName || "Flypick")}</div><div class="copy">${sender && (clean(sender.phone) || clean(sender.address) || clean(sender.email)) ? [clean(sender.phone), ...clean(sender.address).split(/\r?\n/).map(clean), clean(sender.email)].filter(Boolean).map(esc).join("<br />") : "Powered by Flypick Marketplace"}</div></article>
-        <article class="card"><div class="label">Bill To</div><div class="title">${esc(order.customer)}</div><div class="copy">${esc(order.email)}${clean(order.phone) ? `<br />${esc(order.phone)}` : ""}<br />${address}</div></article>
+        <article class="card"><div class="label">Bill To</div><div class="title">${esc(order.customer)}</div><div class="copy">${esc(order.email)}${clean(order.phone) ? `<br />${esc(order.phone)}` : ""}</div></article>
       </section>
       <section class="chips">
         <span class="chip chip-dark">${esc(order.payment)}</span>

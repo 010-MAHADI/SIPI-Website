@@ -42,6 +42,12 @@ export default function Settings() {
   const [sellerAddress, setSellerAddress] = useState<SellerAddressForm>(emptySellerAddress);
   const [isSavingGeneral, setIsSavingGeneral] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const showSellerAddressSection = !isAdmin && (
+    isSeller ||
+    user?.role?.toLowerCase?.() === "seller" ||
+    !!user?.seller_profile ||
+    !!currentShop
+  );
 
   useEffect(() => {
     if (!currentShop) {
@@ -130,7 +136,7 @@ export default function Settings() {
   };
 
   const saveSellerAddress = async () => {
-    if (!isSeller) {
+    if (!showSellerAddressSection) {
       return;
     }
 
@@ -181,6 +187,9 @@ export default function Settings() {
       <Tabs defaultValue="general">
         <TabsList className="rounded-lg bg-muted/60 p-1">
           <TabsTrigger value="general" className="rounded-md">General</TabsTrigger>
+          {showSellerAddressSection ? (
+            <TabsTrigger value="seller-address" className="rounded-md">Seller Address</TabsTrigger>
+          ) : null}
           <TabsTrigger value="notifications" className="rounded-md">Notifications</TabsTrigger>
           <TabsTrigger value="security" className="rounded-md">Security</TabsTrigger>
         </TabsList>
@@ -207,7 +216,25 @@ export default function Settings() {
             </Button>
           </div>
 
-          {isSeller ? (
+          {showSellerAddressSection ? (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="section-title">Seller Address Available</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Open the <strong>Seller Address</strong> tab to add or edit the address used in Print or Download Documents.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </TabsContent>
+
+        {showSellerAddressSection ? (
+          <TabsContent value="seller-address" className="mt-6 space-y-6">
             <div className="stat-card space-y-5">
               <div className="flex items-start gap-3">
                 <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
@@ -216,7 +243,7 @@ export default function Settings() {
                 <div>
                   <h3 className="section-title">Seller Address</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    This address is saved in the database and used automatically in the Print or Download Documents flow.
+                    Add or edit your seller address. This saved address will be used automatically in the Print or Download Documents page.
                   </p>
                 </div>
               </div>
@@ -224,31 +251,31 @@ export default function Settings() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Name</Label>
-                  <Input value={sellerAddress.name} onChange={(event) => updateSellerAddressField("name", event.target.value)} className="rounded-lg" />
+                  <Input value={sellerAddress.name} onChange={(event) => updateSellerAddressField("name", event.target.value)} className="rounded-lg" placeholder="Seller name" />
                 </div>
                 <div className="space-y-2">
                   <Label>Mobile No</Label>
-                  <Input value={sellerAddress.mobileNo} onChange={(event) => updateSellerAddressField("mobileNo", event.target.value)} className="rounded-lg" />
+                  <Input value={sellerAddress.mobileNo} onChange={(event) => updateSellerAddressField("mobileNo", event.target.value)} className="rounded-lg" placeholder="Mobile number" />
                 </div>
                 <div className="space-y-2">
                   <Label>Village</Label>
-                  <Input value={sellerAddress.village} onChange={(event) => updateSellerAddressField("village", event.target.value)} className="rounded-lg" />
+                  <Input value={sellerAddress.village} onChange={(event) => updateSellerAddressField("village", event.target.value)} className="rounded-lg" placeholder="Village" />
                 </div>
                 <div className="space-y-2">
                   <Label>Post Office</Label>
-                  <Input value={sellerAddress.postOffice} onChange={(event) => updateSellerAddressField("postOffice", event.target.value)} className="rounded-lg" />
+                  <Input value={sellerAddress.postOffice} onChange={(event) => updateSellerAddressField("postOffice", event.target.value)} className="rounded-lg" placeholder="Post office" />
                 </div>
                 <div className="space-y-2">
                   <Label>Post Code</Label>
-                  <Input value={sellerAddress.postCode} onChange={(event) => updateSellerAddressField("postCode", event.target.value)} className="rounded-lg" />
+                  <Input value={sellerAddress.postCode} onChange={(event) => updateSellerAddressField("postCode", event.target.value)} className="rounded-lg" placeholder="Post code" />
                 </div>
                 <div className="space-y-2">
                   <Label>Upazila</Label>
-                  <Input value={sellerAddress.upazila} onChange={(event) => updateSellerAddressField("upazila", event.target.value)} className="rounded-lg" />
+                  <Input value={sellerAddress.upazila} onChange={(event) => updateSellerAddressField("upazila", event.target.value)} className="rounded-lg" placeholder="Upazila" />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <Label>Zilla</Label>
-                  <Input value={sellerAddress.zilla} onChange={(event) => updateSellerAddressField("zilla", event.target.value)} className="rounded-lg" />
+                  <Input value={sellerAddress.zilla} onChange={(event) => updateSellerAddressField("zilla", event.target.value)} className="rounded-lg" placeholder="Zilla" />
                 </div>
               </div>
 
@@ -265,8 +292,8 @@ export default function Settings() {
                 {isSavingAddress ? "Saving..." : "Save Seller Address"}
               </Button>
             </div>
-          ) : null}
-        </TabsContent>
+          </TabsContent>
+        ) : null}
 
         <TabsContent value="notifications" className="mt-6 space-y-6">
           <div className="stat-card space-y-5">

@@ -70,6 +70,8 @@ interface Order {
   phone: string;
   items: OrderItem[];
   amount: number;
+  shippingCost?: number;
+  discount?: number;
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   payment: "Paid" | "Unpaid" | "Refunded" | "Partially Refunded";
   paymentMethod: string;
@@ -813,6 +815,8 @@ export default function Orders() {
             imageUrl: item.product_image_url || undefined,
           })),
           amount: o.total || 0,
+          shippingCost: o.shipping_cost || 0,
+          discount: o.discount || 0,
           status: o.status,
           payment: o.payment_status === "paid"
             ? "Paid"
@@ -929,6 +933,20 @@ export default function Orders() {
       email: user?.email || "",
     };
   }, [currentShop?.name, user]);
+
+  const receiptSenderFields = useMemo(
+    () => ({
+      name: (user?.seller_profile?.sender_name || "").trim() || currentShop?.name || user?.username || "Flypick",
+      phone: (user?.seller_profile?.mobile_no || user?.seller_profile?.phone || "").trim(),
+      village: (user?.seller_profile?.village || "").trim(),
+      postOffice: (user?.seller_profile?.post_office || "").trim(),
+      postCode: (user?.seller_profile?.post_code || "").trim(),
+      upazila: (user?.seller_profile?.upazila || "").trim(),
+      zilla: (user?.seller_profile?.zilla || "").trim(),
+      email: user?.email || "",
+    }),
+    [currentShop?.name, user]
+  );
 
   const now = new Date();
   const todayStr = now.toISOString().split("T")[0];
@@ -1165,6 +1183,8 @@ export default function Orders() {
       phone: order.phone,
       items: order.items,
       amount: order.amount,
+      shippingCost: order.shippingCost,
+      discount: order.discount,
       status: order.status,
       payment: order.payment,
       paymentMethod: order.paymentMethod,
@@ -1829,6 +1849,7 @@ export default function Orders() {
           shopName={currentShop?.name || "Flypick"}
           shopId={selectedShopId}
           defaultSender={receiptSender}
+          defaultSenderFields={receiptSenderFields}
         />
 
         {/* Return / Refund Dialog */}
