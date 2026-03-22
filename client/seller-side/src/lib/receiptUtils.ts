@@ -82,33 +82,30 @@ export function buildThermalReceipt(order: ReceiptOrder, shopName: string, _send
     )
     .join("");
 
+  const sub = subtotal(order);
+  const ship = shipping(order);
+  const total = sub + ship;
+
   return shell(
     `Receipt ${order.id}`,
     `
-    @page { size: A4 portrait; margin: 15mm 20mm; }
-    body { background: #f8fafc; color: #000; }
-    .page-wrapper { display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 20px 0; }
-    .page { width: 100%; max-width: 420px; background: #fff; border: 1px solid #e2e8f0; border-radius: 4px; padding: 10mm 8mm; font-family: 'JetBrains Mono', monospace; font-size: 11pt; }
+    @page { size: 80mm auto; margin: 0; }
+    body { background: #fff; color: #000; }
+    .page { width: 76mm; margin: 0 auto; padding: 6mm 4mm; font-family: 'JetBrains Mono', monospace; font-size: 10pt; }
     .center { text-align: center; }
-    .section { padding: 4mm 0; margin-bottom: 3mm; border-bottom: 1px dashed #9ca3af; }
-    .brand { font-size: 22pt; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
-    .subtle { color: #52525b; font-size: 9pt; }
-    .row { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 2mm; font-size: 11pt; }
-    .grand { padding-top: 3mm; border-top: 2px solid #000; font-size: 13pt; }
+    .section { padding: 3mm 0; margin-bottom: 2mm; border-bottom: 1px dashed #9ca3af; }
+    .brand { font-size: 18pt; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+    .subtle { color: #52525b; font-size: 8pt; }
+    .row { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 1mm; }
+    .grand { padding-top: 2mm; border-top: 2px solid #000; font-size: 11pt; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 2.5mm 0; text-align: left; vertical-align: top; }
-    th { border-bottom: 1px solid #000; color: #52525b; font-size: 9pt; text-transform: uppercase; }
-    td { border-bottom: 1px dotted #d4d4d8; font-size: 11pt; }
-    .sku { display: block; margin-top: 1mm; color: #71717a; font-size: 8.5pt; }
+    th, td { padding: 1.5mm 0; text-align: left; vertical-align: top; }
+    th { border-bottom: 1px solid #000; color: #52525b; font-size: 7.5pt; text-transform: uppercase; }
+    td { border-bottom: 1px dotted #d4d4d8; }
+    .sku { display: block; margin-top: 0.5mm; color: #71717a; font-size: 7.5pt; }
     .right { text-align: right; white-space: nowrap; }
-    @media print {
-      body { background: #fff; }
-      .page-wrapper { min-height: unset; padding: 0; }
-      .page { border: none; max-width: 100%; }
-    }
     `,
     `
-    <div class="page-wrapper">
     <main class="page">
       <section class="section center">
         <div class="brand">${esc(shopName || "Flypick")}</div>
@@ -132,13 +129,12 @@ export function buildThermalReceipt(order: ReceiptOrder, shopName: string, _send
         </table>
       </section>
       <section class="section">
-        <div class="row"><span>Subtotal</span><strong>${money(subtotal(order))}</strong></div>
-        <div class="row"><span>Shipping</span><strong>${money(shipping(order))}</strong></div>
-        <div class="row grand"><span>Total</span><strong>${money(order.amount)}</strong></div>
+        <div class="row"><span>Subtotal</span><strong>${money(sub)}</strong></div>
+        <div class="row"><span>Shipping</span><strong>${money(ship)}</strong></div>
+        <div class="row grand"><span>Total</span><strong>${money(total)}</strong></div>
       </section>
       <div class="center subtle">Keep this receipt for your records.</div>
-    </main>
-    </div>`
+    </main>`
   );
 }
 
@@ -154,6 +150,10 @@ export function buildA4Invoice(order: ReceiptOrder, shopName: string, _sender?: 
       </tr>`
     )
     .join("");
+
+  const sub = subtotal(order);
+  const ship = shipping(order);
+  const total = sub + ship;
 
   return shell(
     `Invoice ${order.id}`,
@@ -215,9 +215,9 @@ export function buildA4Invoice(order: ReceiptOrder, shopName: string, _sender?: 
       </table>
       <section class="totals-wrap">
         <div class="totals">
-          <div><span>Subtotal</span><strong>${money(subtotal(order))}</strong></div>
-          <div><span>Shipping</span><strong>${money(shipping(order))}</strong></div>
-          <div class="grand"><span>Total</span><strong>${money(order.amount)}</strong></div>
+          <div><span>Subtotal</span><strong>${money(sub)}</strong></div>
+          <div><span>Shipping</span><strong>${money(ship)}</strong></div>
+          <div class="grand"><span>Total</span><strong>${money(total)}</strong></div>
         </div>
       </section>
       ${clean(order.notes) ? `<section class="notes"><div class="label">Order Notes</div><div>${esc(order.notes || "")}</div></section>` : ""}

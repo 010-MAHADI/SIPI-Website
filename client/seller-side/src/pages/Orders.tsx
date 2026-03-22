@@ -525,6 +525,7 @@ function buildOrderDocumentHtml({
 }) {
   const subtotal = getOrderSubtotal(order);
   const shipping = getOrderShipping(order);
+  const total = roundMoney(subtotal + shipping);
   const receiverLines = receiver
     ? [
         cleanField(receiver.name),
@@ -797,7 +798,7 @@ function buildOrderDocumentHtml({
       <div class="totals">
         <div class="totals-row"><span>Subtotal</span><strong>${formatMoney(subtotal)}</strong></div>
         <div class="totals-row"><span>Shipping</span><strong>${formatMoney(shipping)}</strong></div>
-        <div class="totals-row total"><span>Total</span><strong>${formatMoney(order.amount)}</strong></div>
+        <div class="totals-row total"><span>Total</span><strong>${formatMoney(total)}</strong></div>
       </div>
 
       <div class="note">
