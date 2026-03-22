@@ -29,6 +29,7 @@ interface ShopContextType {
   addShop: (shop: Shop) => void;
   updateShop: (id: string, shop: Partial<Shop>) => void;
   deleteShop: (id: string) => void;
+  refreshShops: () => Promise<void>;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -174,6 +175,22 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const refreshShops = async () => {
+    try {
+      const response = await api.get("/products/shops/mine/");
+      const payload = response.data?.results || response.data;
+      const fetchedShops = Array.isArray(payload) ? payload.map(mapShop) : [];
+      setShops(fetchedShops);
+      setCurrentShopState((prev) => {
+        if (!prev) return fetchedShops[0] || null;
+        const matched = fetchedShops.find((s) => s.id === prev.id);
+        return matched || fetchedShops[0] || null;
+      });
+    } catch {
+      // silently ignore refresh errors
+    }
+  };
+
   return (
     <ShopContext.Provider
       value={{
@@ -185,6 +202,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
         addShop,
         updateShop,
         deleteShop,
+        refreshShops,
       }}
     >
       {children}

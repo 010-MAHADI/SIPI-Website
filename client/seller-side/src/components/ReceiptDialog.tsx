@@ -135,15 +135,15 @@ export function ReceiptDialog({
     const savedSender = loadSender(shopId);
     setSender({
       ...emptyParty(),
-      ...savedSender,
-      name: trim(defaultSenderFields?.name) || trim(defaultSender?.name) || savedSender.name || shopName || "",
-      phone: trim(defaultSenderFields?.phone) || trim(defaultSender?.phone) || savedSender.phone || "",
-      village: trim(defaultSenderFields?.village) || savedSender.village || trim(defaultSender?.address),
-      postOffice: trim(defaultSenderFields?.postOffice) || savedSender.postOffice || "",
-      postCode: trim(defaultSenderFields?.postCode) || savedSender.postCode || "",
-      upazila: trim(defaultSenderFields?.upazila) || savedSender.upazila || "",
-      zilla: trim(defaultSenderFields?.zilla) || savedSender.zilla || "",
-      email: trim(defaultSenderFields?.email) || trim(defaultSender?.email) || savedSender.email || "",
+      // Saved data takes priority; only fall back to defaults when the saved field is empty
+      name: savedSender.name || trim(defaultSenderFields?.name) || trim(defaultSender?.name) || shopName || "",
+      phone: savedSender.phone || trim(defaultSenderFields?.phone) || trim(defaultSender?.phone) || "",
+      village: savedSender.village || trim(defaultSenderFields?.village) || trim(defaultSender?.address) || "",
+      postOffice: savedSender.postOffice || trim(defaultSenderFields?.postOffice) || "",
+      postCode: savedSender.postCode || trim(defaultSenderFields?.postCode) || "",
+      upazila: savedSender.upazila || trim(defaultSenderFields?.upazila) || "",
+      zilla: savedSender.zilla || trim(defaultSenderFields?.zilla) || "",
+      email: savedSender.email || trim(defaultSenderFields?.email) || trim(defaultSender?.email) || "",
     });
 
     if (!order) {
@@ -175,6 +175,12 @@ export function ReceiptDialog({
   const generate = (type: ReceiptDocType, action: "print" | "download") => {
     const senderDetails = toSenderDetails(sender);
     const receiverDetails = toSenderDetails(receiver);
+
+    // Always persist sender details so they're available next time
+    if (trim(sender.name) || trim(sender.phone) || trim(sender.village)) {
+      saveSender(shopId, sender);
+    }
+
     let html = "";
 
     switch (type) {
@@ -323,6 +329,15 @@ export function ReceiptDialog({
 
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setStep("pick")}>Back</Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  saveSender(shopId, sender);
+                  toast.success("Sender details saved");
+                }}
+              >
+                Save Address
+              </Button>
               <Button variant="outline" onClick={() => handleLabelAction("download")}>
                 <Download className="mr-1.5 h-4 w-4" /> Download
               </Button>

@@ -35,7 +35,7 @@ const trim = (value?: string | null) => (value || "").trim();
 
 export default function Settings() {
   const { user, isAdmin, isSeller, refreshUser } = useAuth();
-  const { currentShop, updateShop } = useShop();
+  const { currentShop, updateShop, refreshShops } = useShop();
   const [storeName, setStoreName] = useState("Flypick");
   const [storeEmail, setStoreEmail] = useState(user?.email || "");
   const [storeDescription, setStoreDescription] = useState("");
@@ -150,7 +150,7 @@ export default function Settings() {
         return;
       }
 
-      const response = await api.patch(`/products/shops/${currentShop.id}/`, {
+      await api.patch(`/products/shops/${currentShop.id}/`, {
         sender_name: trim(sellerAddress.name),
         sender_mobile_no: trim(sellerAddress.mobileNo),
         sender_village: trim(sellerAddress.village),
@@ -160,15 +160,8 @@ export default function Settings() {
         sender_zilla: trim(sellerAddress.zilla),
       });
 
-      updateShop(currentShop.id, {
-        senderName: response.data?.sender_name || trim(sellerAddress.name),
-        senderMobileNo: response.data?.sender_mobile_no || trim(sellerAddress.mobileNo),
-        senderVillage: response.data?.sender_village || trim(sellerAddress.village),
-        senderPostOffice: response.data?.sender_post_office || trim(sellerAddress.postOffice),
-        senderPostCode: response.data?.sender_post_code || trim(sellerAddress.postCode),
-        senderUpazila: response.data?.sender_upazila || trim(sellerAddress.upazila),
-        senderZilla: response.data?.sender_zilla || trim(sellerAddress.zilla),
-      });
+      // Re-fetch shops from the server so the saved address is reflected immediately
+      await refreshShops();
 
       toast.success("Seller address saved. It will now be used in print and download documents.");
     } catch (error: any) {
