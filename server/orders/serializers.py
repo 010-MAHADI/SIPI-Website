@@ -237,7 +237,8 @@ class OrderCreateSerializer(serializers.Serializer):
                 except Product.DoesNotExist:
                     raise serializers.ValidationError(f"Product with ID {item_data['product_id']} not found.")
                 
-                price = Decimal(str(product.price))
+                # Use originalPrice (discounted price) if available, else fall back to price
+                price = Decimal(str(product.originalPrice if product.originalPrice is not None else product.price))
                 quantity = item_data['quantity']
                 subtotal += price * quantity
                 

@@ -50,4 +50,6 @@ class CartItem(models.Model):
     
     @property
     def total_price(self):
-        return self.product.price * self.quantity
+        # Use originalPrice (discounted price) if available, else fall back to price
+        unit_price = self.product.originalPrice if self.product.originalPrice is not None else self.product.price
+        return unit_price * self.quantity
