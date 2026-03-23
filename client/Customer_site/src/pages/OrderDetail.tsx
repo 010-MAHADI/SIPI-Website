@@ -172,6 +172,7 @@ const OrderDetail = () => {
                       <div className="flex gap-2 mt-0.5">
                         {item.color && <span className="text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">{item.color}</span>}
                         {item.size && <span className="text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">{item.size}</span>}
+                        {item.shipping_type && <span className="text-[10px] text-primary border border-primary/30 rounded px-1.5 py-0.5 capitalize">{item.shipping_type}</span>}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">Qty: {item.quantity}</p>
                       {(order.status === "delivered" || order.status === "shipped") && (

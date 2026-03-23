@@ -35,6 +35,9 @@ interface OrderItem {
   qty: number;
   price: number;
   imageUrl?: string;
+  shippingType?: string;
+  color?: string;
+  size?: string;
 }
 
 interface TrackingUpdate {
@@ -885,6 +888,9 @@ export default function Orders() {
             qty: item.quantity || 1,
             price: Number(item.price) || 0,
             imageUrl: item.product_image_url || undefined,
+            shippingType: item.shipping_type || undefined,
+            color: item.color || undefined,
+            size: item.size || undefined,
           })),
           amount: o.total || 0,
           subtotal: o.subtotal || 0,
@@ -1506,6 +1512,11 @@ export default function Orders() {
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm">{item.name}</p>
                       <p className="text-xs text-muted-foreground font-mono mt-0.5">SKU: {item.sku}</p>
+                      <div className="flex gap-1.5 mt-1 flex-wrap">
+                        {item.color && <span className="text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">{item.color}</span>}
+                        {item.size && <span className="text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">{item.size}</span>}
+                        {item.shippingType && <span className="text-[10px] text-primary border border-primary/30 rounded px-1.5 py-0.5 capitalize">{item.shippingType}</span>}
+                      </div>
                     </div>
                     <div className="text-center px-3">
                       <p className="text-xs text-muted-foreground">Qty</p>
