@@ -53,8 +53,10 @@ const normalizeImageUrl = (image: string | null | undefined): string => {
 const normalizeProduct = (p: any): Product => ({
     id: Number(p?.id ?? 0),
     title: p?.title || "Untitled Product",
-    price: Number(p?.price ?? 0),
-    originalPrice: Number(p?.originalPrice ?? p?.price ?? 0),
+    // price = regular price, originalPrice = discount price (seller form convention)
+    // For display: show discount price as main, regular price as crossed-out
+    price: Number(p?.originalPrice ?? p?.price ?? 0),       // discounted (main) price
+    originalPrice: Number(p?.price ?? 0),                   // regular (crossed-out) price
     discount: Number(p?.discount ?? 0),
     rating: Number(p?.rating ?? 0),
     reviews: Number(p?.reviews_count ?? 0),
