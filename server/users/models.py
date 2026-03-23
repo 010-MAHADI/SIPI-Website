@@ -65,6 +65,8 @@ class CustomerProfile(models.Model):
     email_notifications = models.BooleanField(default=True)
     language = models.CharField(max_length=10, default='en')
     currency = models.CharField(max_length=10, default='BDT')
+    admin_note = models.TextField(blank=True, null=True)
+    last_login_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -219,22 +219,12 @@ class CustomersAPIView(APIView):
 class CustomerDetailAPIView(APIView):
     permission_classes = [IsSellerOrAdmin]
 
-    def get(self, request, customer_id):
-        user = request.user
-        try:
-            customer = User.objects.get(id=customer_id)
-        except User.DoesNotExist:
-            return Response({"error": "Customer not found"}, status=404)
-
-        # Scope orders to seller if not admin
-        if is_admin_user(user):
-            orders_qs = Order.objects.filter(customer=customer).prefetch_related(
-                "items", "items__product", "return_requests"
-            ).order_by("-created_at")
-        else:
-            orders_qs = Order.objects.filter(
-                customer=customer, items__product__shop__seller=user
-            ).distinct().prefetch_related("items", "items__product", "return_requests").order_by("-created_at")
+    def _build_response(self, customer, orders_qs, request):
+        # Pull actual name from CustomerProfile
+        cp = getattr(customer, 'customer_profile', None)
+        first_name = (cp.first_name if cp else None) or customer.first_name or ""
+        last_name = (cp.last_name if cp else None) or customer.last_name or ""
+        phone = (cp.phone if cp else None) or ""
 
         # Account stats
         total_orders = orders_qs.count()
@@ -243,7 +233,6 @@ class CustomerDetailAPIView(APIView):
             output_field=DecimalField(max_digits=12, decimal_places=2),
         )
         total_spent = orders_qs.aggregate(total=Sum(spent_expr))["total"] or 0
-
         cancelled_count = orders_qs.filter(status="cancelled").count()
         delivered_count = orders_qs.filter(status="delivered").count()
         return_count = sum(o.return_requests.count() for o in orders_qs)
@@ -262,41 +251,84 @@ class CustomerDetailAPIView(APIView):
                 "country": last_order.shipping_country,
             }
 
-        # Recent orders (last 10)
+        # Recent orders (last 10) — full detail
         recent_orders = []
         for o in orders_qs[:10]:
-            items_preview = [
-                {
+            items_detail = []
+            for item in o.items.all():
+                product = item.product
+                # Build product image URL
+                image_url = item.product_image or ""
+                shop_name = ""
+                product_slug = None
+                product_category_slug = None
+                if product:
+                    shop_name = product.shop.name if product.shop else ""
+                    if not image_url and product.image:
+                        try:
+                            image_url = request.build_absolute_uri(product.image.url)
+                        except Exception:
+                            image_url = ""
+                    product_slug = getattr(product, 'slug', None)
+                    cat = getattr(product, 'category_fk', None)
+                    product_category_slug = cat.slug if cat else None
+
+                items_detail.append({
+                    "id": item.id,
+                    "product_id": product.id if product else None,
                     "title": item.product_title,
+                    "image": image_url,
                     "quantity": item.quantity,
                     "price": float(item.price),
-                }
-                for item in o.items.all()[:3]
-            ]
+                    "total": float(item.price * item.quantity),
+                    "color": item.color or "",
+                    "size": item.size or "",
+                    "shop_name": shop_name,
+                    "product_slug": product_slug,
+                    "category_slug": product_category_slug,
+                })
+
             recent_orders.append({
                 "id": o.id,
                 "order_id": o.order_id,
                 "status": o.status,
                 "payment_method": o.payment_method,
                 "payment_status": o.payment_status,
+                "subtotal": float(o.subtotal),
+                "shipping_cost": float(o.shipping_cost),
+                "discount": float(o.discount),
                 "total_amount": float(o.total_amount),
                 "created_at": o.created_at.isoformat(),
                 "items_count": o.items.count(),
-                "items_preview": items_preview,
+                "items_preview": [{"title": i["title"], "quantity": i["quantity"], "price": i["price"]} for i in items_detail[:3]],
+                "items": items_detail,
+                "shipping": {
+                    "full_name": o.shipping_full_name,
+                    "phone": o.shipping_phone,
+                    "street": o.shipping_street,
+                    "city": o.shipping_city,
+                    "state": o.shipping_state,
+                    "zip_code": o.shipping_zip_code,
+                    "country": o.shipping_country,
+                },
             })
 
-        # Admin note (stored in a simple field we'll use from the customer's last order admin_note or a placeholder)
-        admin_note = getattr(customer, "admin_note", "") or ""
+        # Admin note from CustomerProfile
+        admin_note = (cp.admin_note if cp and hasattr(cp, 'admin_note') else "") or ""
+
+        # last_login: use profile's tracked_last_login if available, else Django's last_login
+        tracked_login = (cp.last_login_at if cp and hasattr(cp, 'last_login_at') else None)
+        last_login = tracked_login or customer.last_login
 
         return Response({
             "id": customer.id,
             "username": customer.username,
             "email": customer.email,
-            "first_name": customer.first_name,
-            "last_name": customer.last_name,
-            "phone": getattr(customer, "phone", "") or (last_address["phone"] if last_address else ""),
+            "first_name": first_name,
+            "last_name": last_name,
+            "phone": phone or (last_address["phone"] if last_address else ""),
             "date_joined": customer.date_joined.isoformat(),
-            "last_login": customer.last_login.isoformat() if customer.last_login else None,
+            "last_login": last_login.isoformat() if last_login else None,
             "is_active": customer.is_active,
             "status": "Active" if customer.is_active else "Blocked",
             "admin_note": admin_note,
@@ -311,6 +343,42 @@ class CustomerDetailAPIView(APIView):
             },
             "recent_orders": recent_orders,
         })
+
+    def get(self, request, customer_id):
+        user = request.user
+        try:
+            customer = User.objects.select_related('customer_profile').get(id=customer_id)
+        except User.DoesNotExist:
+            return Response({"error": "Customer not found"}, status=404)
+
+        if is_admin_user(user):
+            orders_qs = Order.objects.filter(customer=customer).prefetch_related(
+                "items", "items__product", "items__product__shop", "items__product__category_fk", "return_requests"
+            ).order_by("-created_at")
+        else:
+            orders_qs = Order.objects.filter(
+                customer=customer, items__product__shop__seller=user
+            ).distinct().prefetch_related(
+                "items", "items__product", "items__product__shop", "items__product__category_fk", "return_requests"
+            ).order_by("-created_at")
+
+        return self._build_response(customer, orders_qs, request)
+
+    def patch(self, request, customer_id):
+        """Update admin note for a customer"""
+        try:
+            customer = User.objects.select_related('customer_profile').get(id=customer_id)
+        except User.DoesNotExist:
+            return Response({"error": "Customer not found"}, status=404)
+
+        from users.models import CustomerProfile
+        cp, _ = CustomerProfile.objects.get_or_create(user=customer)
+        note = request.data.get("admin_note", "")
+        if hasattr(cp, 'admin_note'):
+            cp.admin_note = note
+            cp.save(update_fields=['admin_note'])
+            return Response({"success": True, "admin_note": note})
+        return Response({"error": "admin_note field not available — run migrations"}, status=400)
 
 
 class AnalyticsAPIView(APIView):

@@ -20,8 +20,7 @@ router.register(r"coupons", CouponViewSet, basename="seller-coupons")
 urlpatterns = [
     path("", include(router.urls)),
     path("customers/", CustomersAPIView.as_view(), name="seller-customers"),
-    path("customers/<int:customer_id>/", CustomerDetailAPIView.as_view(), name="seller-customer-detail"),
-    path("analytics/", AnalyticsAPIView.as_view(), name="seller-analytics"),
+    path("customers/<int:customer_id>/", CustomerDetailAPIView.as_view(), name="seller-customer-detail"),    path("analytics/", AnalyticsAPIView.as_view(), name="seller-analytics"),
     path("transactions/", TransactionsAPIView.as_view(), name="seller-transactions"),
     path(
         "transactions/payment-methods/",

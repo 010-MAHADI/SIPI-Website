@@ -1,16 +1,44 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 
+export interface CustomerOrderItem {
+  id: number;
+  product_id: number | null;
+  title: string;
+  image: string;
+  quantity: number;
+  price: number;
+  total: number;
+  color: string;
+  size: string;
+  shop_name: string;
+  product_slug: string | null;
+  category_slug: string | null;
+}
+
 export interface CustomerOrderPreview {
   id: number;
   order_id: string;
   status: string;
   payment_method: string;
   payment_status: string;
+  subtotal: number;
+  shipping_cost: number;
+  discount: number;
   total_amount: number;
   created_at: string;
   items_count: number;
   items_preview: { title: string; quantity: number; price: number }[];
+  items: CustomerOrderItem[];
+  shipping: {
+    full_name: string;
+    phone: string;
+    street: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    country: string;
+  } | null;
 }
 
 export interface CustomerDetail {

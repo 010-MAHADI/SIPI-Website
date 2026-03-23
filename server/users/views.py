@@ -80,6 +80,24 @@ class RegisterView(generics.CreateAPIView):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 200:
+            from django.utils import timezone
+            from .models import CustomerProfile
+            try:
+                from django.contrib.auth import get_user_model
+                U = get_user_model()
+                email = request.data.get('email', '')
+                user = U.objects.select_related('customer_profile').get(email=email)
+                if user.role == 'Customer':
+                    cp, _ = CustomerProfile.objects.get_or_create(user=user)
+                    cp.last_login_at = timezone.now()
+                    cp.save(update_fields=['last_login_at'])
+            except Exception:
+                pass
+        return response
+
 
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
