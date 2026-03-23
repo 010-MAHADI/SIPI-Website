@@ -2,6 +2,7 @@ import { Star, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Product } from "@/hooks/useProducts";
 import { generateProductUrl } from "@/lib/slugify";
+import TakaSign from "@/components/TakaSign";
 
 interface ProductCardProps {
   product: Product;
@@ -48,10 +49,10 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
         <div className="flex items-baseline gap-2 mb-1">
           <span className="price-current text-lg">
-            ৳{product.price.toLocaleString()}
+            <TakaSign />{product.price.toLocaleString()}
           </span>
           <span className="price-original">
-            ৳{product.originalPrice.toLocaleString()}
+            <TakaSign />{product.originalPrice.toLocaleString()}
           </span>
           <span className="price-discount">-{product.discount}%</span>
         </div>

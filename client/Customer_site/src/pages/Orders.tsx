@@ -5,6 +5,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { useOrders, Order } from "@/context/OrderContext";
 import { toast } from "sonner";
+import TakaSign from "@/components/TakaSign";
 
 const STATUS_TABS = [
   { key: "all", label: "All" },
@@ -249,8 +250,7 @@ const OrderCard = ({
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Total Purchase</span>
           <div className="flex items-baseline gap-1">
-            <span className="text-xs text-muted-foreground">৳</span>
-            <span className="text-lg font-bold">{parseFloat(order.total_amount).toLocaleString()}</span>
+            <span className="text-lg font-bold"><TakaSign />{parseFloat(order.total_amount).toLocaleString()}</span>
           </div>
         </div>
 

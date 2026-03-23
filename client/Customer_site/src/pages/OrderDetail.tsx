@@ -6,6 +6,7 @@ import { useOrders } from "@/context/OrderContext";
 import { generateProductUrl } from "@/lib/slugify";
 import { toast } from "sonner";
 import { useState } from "react";
+import TakaSign from "@/components/TakaSign";
 
 const paymentLabels: Record<string, string> = {
   cod: "Cash on Delivery",
@@ -184,7 +185,7 @@ const OrderDetail = () => {
                         </Link>
                       )}
                     </div>
-                    <span className="text-sm font-bold whitespace-nowrap">৳{(parseFloat(item.price || "0") * item.quantity).toLocaleString()}</span>
+                    <span className="text-sm font-bold whitespace-nowrap"><TakaSign />{(parseFloat(item.price || "0") * item.quantity).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
@@ -211,23 +212,23 @@ const OrderDetail = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span>৳{subtotal.toLocaleString()}</span>
+                  <span><TakaSign />{subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
                   <span className={shipping === 0 ? "text-[hsl(142,71%,45%)]" : ""}>
-                    {shipping === 0 ? "Free" : `৳${shipping.toLocaleString()}`}
+                    {shipping === 0 ? "Free" : <><TakaSign />{shipping.toLocaleString()}</>}
                   </span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-[hsl(142,71%,45%)]">
                     <span className="flex items-center gap-1"><Tag className="w-3 h-3" />{order.coupon_code || "Discount"}</span>
-                    <span>-৳{discount.toLocaleString()}</span>
+                    <span>-<TakaSign />{discount.toLocaleString()}</span>
                   </div>
                 )}
                 <div className="border-t border-border pt-2 flex justify-between font-bold text-base">
                   <span>Total</span>
-                  <span className="text-primary">৳{total.toLocaleString()}</span>
+                  <span className="text-primary"><TakaSign />{total.toLocaleString()}</span>
                 </div>
               </div>
             </div>

@@ -3,6 +3,7 @@ import SiteFooter from "@/components/SiteFooter";
 import ProductCard from "@/components/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
 import { Gift } from "lucide-react";
+import TakaSign from "@/components/TakaSign";
 
 const BundleDeals = () => {
   const { data: products = [], isLoading, isError } = useProducts();
@@ -20,7 +21,7 @@ const BundleDeals = () => {
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold">Bundle Deals</h1>
-            <p className="text-xs text-muted-foreground">3 from US $2.99 · {bundleProducts.length} products</p>
+            <p className="text-xs text-muted-foreground">3 from <TakaSign />249 · {bundleProducts.length} products</p>
           </div>
         </div>
 

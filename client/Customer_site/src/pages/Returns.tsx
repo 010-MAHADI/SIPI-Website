@@ -3,6 +3,7 @@ import { RotateCcw, Package, ChevronRight } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { useReturns, ReturnRequest } from "@/hooks/useReturns";
+import TakaSign from "@/components/TakaSign";
 
 const statusStyles: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
@@ -79,7 +80,7 @@ const ReturnCard = ({ returnReq }: { returnReq: ReturnRequest }) => {
 
       {returnReq.refund_amount && returnReq.status === "refunded" && (
         <p className="text-sm font-bold text-[hsl(var(--success))]">
-          Refunded: ৳{parseFloat(returnReq.refund_amount).toLocaleString()}
+          Refunded: <TakaSign />{parseFloat(returnReq.refund_amount).toLocaleString()}
         </p>
       )}
 

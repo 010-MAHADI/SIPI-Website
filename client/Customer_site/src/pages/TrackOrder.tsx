@@ -3,6 +3,7 @@ import { ArrowLeft, Package, Truck, CheckCircle2, MapPin, Box } from "lucide-rea
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { useOrders } from "@/context/OrderContext";
+import TakaSign from "@/components/TakaSign";
 
 const STEPS = [
   { key: "placed", label: "Order Placed", desc: "Your order has been placed successfully", icon: Box },
@@ -76,7 +77,7 @@ const TrackOrder = () => {
                   {order.items[0]?.product_details?.title || order.items[0]?.product_title}
                   {order.items.length > 1 && <span className="text-muted-foreground"> +{order.items.length - 1} more</span>}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">Total: ৳{parseFloat(order.total_amount || "0").toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Total: <TakaSign />{parseFloat(order.total_amount || "0").toLocaleString()}</p>
               </div>
             </div>
           </div>

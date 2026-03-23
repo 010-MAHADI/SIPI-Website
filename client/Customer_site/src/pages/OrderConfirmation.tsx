@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { CheckCircle, Package, MapPin, CreditCard } from "lucide-react";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import TakaSign from "@/components/TakaSign";
 
 const OrderConfirmation = () => {
   const { state } = useLocation();
@@ -67,28 +68,28 @@ const OrderConfirmation = () => {
                     {item.color && <p className="text-xs text-muted-foreground">Color: {item.color}</p>}
                     {item.size && <p className="text-xs text-muted-foreground">Size: {item.size}</p>}
                   </div>
-                  <span className="text-sm font-bold">৳{parseFloat(item.total_price).toLocaleString()}</span>
+                  <span className="text-sm font-bold"><TakaSign />{parseFloat(item.total_price).toLocaleString()}</span>
                 </div>
               ))}
             </div>
             <div className="border-t border-border mt-3 pt-3 space-y-1">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span>৳{parseFloat(order.subtotal).toLocaleString()}</span>
+                <span><TakaSign />{parseFloat(order.subtotal).toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Shipping</span>
-                <span>৳{parseFloat(order.shipping_cost).toLocaleString()}</span>
+                <span><TakaSign />{parseFloat(order.shipping_cost).toLocaleString()}</span>
               </div>
               {order.discount > 0 && (
                 <div className="flex justify-between text-sm text-success">
                   <span>Discount</span>
-                  <span>-৳{parseFloat(order.discount).toLocaleString()}</span>
+                  <span>-<TakaSign />{parseFloat(order.discount).toLocaleString()}</span>
                 </div>
               )}
               <div className="flex justify-between font-bold pt-2 border-t">
                 <span>Total</span>
-                <span className="text-primary">৳{parseFloat(order.total_amount).toLocaleString()}</span>
+                <span className="text-primary"><TakaSign />{parseFloat(order.total_amount).toLocaleString()}</span>
               </div>
             </div>
           </div>

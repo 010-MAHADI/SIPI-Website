@@ -14,6 +14,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { extractProductId, generateProductUrl, slugify } from "@/lib/slugify";
+import TakaSign from "@/components/TakaSign";
 
 const ProductDetail = () => {
   const { id, category, slug } = useParams();
@@ -304,18 +305,18 @@ const ProductDetail = () => {
               <div className="welcome-deal-box mb-4">
                 <p className="text-primary font-semibold text-sm mb-1">Welcome deal</p>
                 <div className="flex items-baseline gap-3">
-                  <span className="text-3xl font-bold text-primary">৳{product.price.toLocaleString()}</span>
-                  <span className="price-original">৳{product.originalPrice.toLocaleString()}</span>
+                  <span className="text-3xl font-bold text-primary"><TakaSign />{product.price.toLocaleString()}</span>
+                  <span className="price-original"><TakaSign />{product.originalPrice.toLocaleString()}</span>
                 </div>
-                <p className="text-sm text-success font-medium">New shoppers save ৳{(product.originalPrice - product.price).toFixed(2)}</p>
+                <p className="text-sm text-success font-medium">New shoppers save <TakaSign />{(product.originalPrice - product.price).toFixed(2)}</p>
               </div>
             )}
 
             {!product.welcomeDeal && (
               <div className="mb-4">
                 <div className="flex items-baseline gap-3">
-                  <span className="text-3xl font-bold text-primary">৳{product.price.toLocaleString()}</span>
-                  <span className="price-original">৳{product.originalPrice.toLocaleString()}</span>
+                  <span className="text-3xl font-bold text-primary"><TakaSign />{product.price.toLocaleString()}</span>
+                  <span className="price-original"><TakaSign />{product.originalPrice.toLocaleString()}</span>
                   <span className="price-discount">-{product.discount}%</span>
                 </div>
               </div>
@@ -398,12 +399,9 @@ const ProductDetail = () => {
                 <span className="font-medium">
                   {(() => {
                     const selected = shippingOptions.find(opt => opt.type.toLowerCase() === selectedShipping);
-                    if (selected) {
-                      return `${selected.type}${selected.freeShipping ? " · Free" : ` · ৳${selected.price}`}`;
-                    }
-                    return shippingOptions.length > 0 
-                      ? `${shippingOptions[0].type}${shippingOptions[0].freeShipping ? " · Free" : ` · ৳${shippingOptions[0].price}`}`
-                      : "Shipping";
+                    const opt = selected || (shippingOptions.length > 0 ? shippingOptions[0] : null);
+                    if (!opt) return "Shipping";
+                    return opt.freeShipping ? `${opt.type} · Free` : <>{opt.type} · <TakaSign />{opt.price}</>;
                   })()}
                 </span>
                 <ChevronRight className={`w-3 h-3 ml-auto transition-transform ${showShipping ? "rotate-90" : ""}`} />
@@ -427,7 +425,7 @@ const ProductDetail = () => {
                       )}
                       <div className="flex-1">
                         <span className="text-sm font-medium">
-                          {option.type} · {option.freeShipping ? "Free" : `৳${option.price}`}
+                          {option.type} · {option.freeShipping ? "Free" : <><TakaSign />{option.price}</>}
                         </span>
                         <p className="text-xs text-muted-foreground">{option.estimatedDelivery} business days</p>
                       </div>
@@ -565,12 +563,9 @@ const ProductDetail = () => {
                 <span className="font-medium">
                   {(() => {
                     const selected = shippingOptions.find(opt => opt.type.toLowerCase() === selectedShipping);
-                    if (selected) {
-                      return `${selected.type}${selected.freeShipping ? " · Free" : ` · ৳${selected.price}`}`;
-                    }
-                    return shippingOptions.length > 0 
-                      ? `${shippingOptions[0].type}${shippingOptions[0].freeShipping ? " · Free" : ` · ৳${shippingOptions[0].price}`}`
-                      : "Shipping";
+                    const opt = selected || (shippingOptions.length > 0 ? shippingOptions[0] : null);
+                    if (!opt) return "Shipping";
+                    return opt.freeShipping ? `${opt.type} · Free` : <>{opt.type} · <TakaSign />{opt.price}</>;
                   })()}
                 </span>
                 <ChevronRight className={`w-3 h-3 ml-auto transition-transform ${showShipping ? "rotate-90" : ""}`} />
@@ -594,7 +589,7 @@ const ProductDetail = () => {
                       )}
                       <div className="flex-1">
                         <span className="text-sm font-medium">
-                          {option.type} · {option.freeShipping ? "Free" : `৳${option.price}`}
+                          {option.type} · {option.freeShipping ? "Free" : <><TakaSign />{option.price}</>}
                         </span>
                         <p className="text-xs text-muted-foreground">{option.estimatedDelivery} business days</p>
                       </div>
@@ -762,7 +757,7 @@ const ProductDetail = () => {
               </div>
               <div>
                 <p className="text-sm font-medium line-clamp-2">{product.title}</p>
-                <p className="text-lg font-bold text-primary mt-1">৳{product.price.toLocaleString()}</p>
+                <p className="text-lg font-bold text-primary mt-1"><TakaSign />{product.price.toLocaleString()}</p>
               </div>
             </div>
 

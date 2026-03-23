@@ -6,6 +6,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { useOrders } from "@/context/OrderContext";
 import { useSubmitReview } from "@/hooks/useReviews";
 import { toast } from "@/hooks/use-toast";
+import TakaSign from "@/components/TakaSign";
 
 const WriteReview = () => {
   const { orderId, itemId } = useParams();
@@ -149,7 +150,7 @@ const WriteReview = () => {
                 {item.product_title}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Qty: {item.quantity} · ৳{parseFloat(item.price).toLocaleString()}
+                Qty: {item.quantity} · <TakaSign />{parseFloat(item.price).toLocaleString()}
               </p>
             </div>
           </div>

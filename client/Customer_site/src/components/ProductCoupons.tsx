@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Tag, Copy, Clock, Users, Package, ShoppingCart, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import api from "@/lib/api";
+import TakaSign from "@/components/TakaSign";
 
 interface Coupon {
   id: number;
@@ -197,7 +198,7 @@ const ProductCoupons = ({ productId }: ProductCouponsProps) => {
                       </span>
                       {coupon.min_order_amount > 0 && (
                         <span className="text-sm text-muted-foreground font-medium">
-                          Min ৳{coupon.min_order_amount}
+                          Min <TakaSign />{coupon.min_order_amount}
                         </span>
                       )}
                     </div>

@@ -5,6 +5,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { useCart } from "@/context/CartContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { generateProductUrl } from "@/lib/slugify";
+import TakaSign from "@/components/TakaSign";
 
 const Cart = () => {
   const { items, updateQuantity, removeFromCart, toggleSelect, selectAll, selectedTotal, selectedCount, loading, selectedItems } = useCart();
@@ -184,7 +185,7 @@ const Cart = () => {
                           </button>
                         </div>
                         <div className="flex items-center gap-2 sm:gap-4">
-                          <span className="font-bold text-xs sm:text-base text-foreground">৳{(product.price * quantity).toLocaleString()}</span>
+                          <span className="font-bold text-xs sm:text-base text-foreground"><TakaSign />{(product.price * quantity).toLocaleString()}</span>
                           <button onClick={() => id && removeFromCart(id)} className="text-muted-foreground hover:text-destructive active:scale-95">
                             <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           </button>
@@ -203,19 +204,19 @@ const Cart = () => {
             <div className="space-y-2 text-sm mb-4">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Selected ({selectedCount} items)</span>
-                <span className="font-medium">৳{selectedTotal.toLocaleString()}</span>
+                <span className="font-medium"><TakaSign />{selectedTotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Shipping</span>
                 <span className={totalShipping === 0 ? "text-success font-medium" : "font-medium"}>
-                  {totalShipping === 0 ? 'Free' : `৳${totalShipping.toLocaleString()}`}
+                  {totalShipping === 0 ? 'Free' : <><TakaSign />{totalShipping.toLocaleString()}</>}
                 </span>
               </div>
               {shippingDetails.length > 0 && totalShipping > 0 && (
                 <div className="text-xs text-muted-foreground pl-2">
                   {shippingDetails.map((detail, index) => (
                     <div key={index}>
-                      {detail.method}: ৳{detail.cost.toLocaleString()}
+                      {detail.method}: <TakaSign />{detail.cost.toLocaleString()}
                     </div>
                   ))}
                 </div>
@@ -224,7 +225,7 @@ const Cart = () => {
             <div className="border-t border-border pt-3 mb-4">
               <div className="flex justify-between font-bold">
                 <span>Total</span>
-                <span className="text-primary">৳{finalTotal.toLocaleString()}</span>
+                <span className="text-primary"><TakaSign />{finalTotal.toLocaleString()}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">Tax excluded</p>
             </div>
@@ -249,10 +250,10 @@ const Cart = () => {
             {selectedCount > 0 ? `${selectedCount} selected` : "No items selected"}
           </span>
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-primary">৳{finalTotal.toLocaleString()}</span>
+            <span className="text-lg font-bold text-primary"><TakaSign />{finalTotal.toLocaleString()}</span>
             {totalShipping > 0 && (
               <span className="text-xs text-muted-foreground">
-                (incl. ৳{totalShipping.toLocaleString()} shipping)
+                (incl. <TakaSign />{totalShipping.toLocaleString()} shipping)
               </span>
             )}
           </div>

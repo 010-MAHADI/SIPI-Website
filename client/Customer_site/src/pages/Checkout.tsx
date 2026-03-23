@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import api from "@/lib/api";
+import TakaSign from "@/components/TakaSign";
 
 interface PaymentMethods {
   cash_on_delivery: boolean;
@@ -510,7 +511,7 @@ const Checkout = () => {
                       <p className="text-xs text-muted-foreground">Estimated delivery: {detail.time}</p>
                     </div>
                     <span className={detail.cost === 0 ? "text-success font-bold" : "font-bold"}>
-                      {detail.cost === 0 ? 'Free' : `৳${detail.cost.toLocaleString()}`}
+                      {detail.cost === 0 ? 'Free' : <><TakaSign />{detail.cost.toLocaleString()}</>}
                     </span>
                   </div>
                 ))}
@@ -537,7 +538,7 @@ const Checkout = () => {
                       </div>
                       <div className="flex justify-between mt-2">
                         <span className="text-xs text-muted-foreground">Qty: {item.quantity}</span>
-                        <span className="text-sm font-bold text-primary">৳{(item.product.price * item.quantity).toLocaleString()}</span>
+                        <span className="text-sm font-bold text-primary"><TakaSign />{(item.product.price * item.quantity).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -547,12 +548,12 @@ const Checkout = () => {
               <div className="border-t border-border pt-3 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal ({checkoutCount} items)</span>
-                  <span>৳{checkoutTotal.toLocaleString()}</span>
+                  <span><TakaSign />{checkoutTotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Shipping</span>
                   <span className={totalShipping === 0 ? "text-success font-medium" : ""}>
-                    {totalShipping === 0 ? 'Free' : `৳${totalShipping.toLocaleString()}`}
+                    {totalShipping === 0 ? 'Free' : <><TakaSign />{totalShipping.toLocaleString()}</>}
                   </span>
                 </div>
                 {appliedCoupon && (
@@ -561,7 +562,7 @@ const Checkout = () => {
                       <Tag className="w-3 h-3" />
                       Coupon ({appliedCoupon.code})
                     </span>
-                    <span>-৳{couponDiscount.toLocaleString()}</span>
+                    <span>-<TakaSign />{couponDiscount.toLocaleString()}</span>
                   </div>
                 )}
               </div>
@@ -609,10 +610,10 @@ const Checkout = () => {
               <div className="border-t border-border pt-3 mt-3">
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span className="text-primary">৳{finalTotal.toLocaleString()}</span>
+                  <span className="text-primary"><TakaSign />{finalTotal.toLocaleString()}</span>
                 </div>
                 {couponDiscount > 0 && (
-                  <p className="text-xs text-success font-medium mt-0.5">You save ৳{couponDiscount.toLocaleString()}!</p>
+                  <p className="text-xs text-success font-medium mt-0.5">You save <TakaSign />{couponDiscount.toLocaleString()}!</p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">Tax excluded</p>
               </div>

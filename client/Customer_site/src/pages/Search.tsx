@@ -7,6 +7,7 @@ import SiteFooter from "@/components/SiteFooter";
 import ProductCard from "@/components/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
 import api from "@/lib/api";
+import TakaSign from "@/components/TakaSign";
 
 const Search = () => {
   const { data: products = [], isLoading, isError } = useProducts();
@@ -141,7 +142,7 @@ const Search = () => {
           <div className="flex flex-wrap gap-2 mb-4">
             {(priceMin || priceMax) && (
               <span className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-full">
-                ৳{priceMin || "0"} - ৳{priceMax || "∞"}
+                <TakaSign />{priceMin || "0"} - <TakaSign />{priceMax || "∞"}
                 <button onClick={() => { setPriceMin(""); setPriceMax(""); }}><X className="w-3 h-3" /></button>
               </span>
             )}
@@ -187,7 +188,7 @@ const Search = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {/* Price Range */}
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1.5">Price Range (৳)</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1.5">Price Range (Tk/৳)</p>
                 <div className="flex items-center gap-1.5">
                   <input
                     type="number"

@@ -2,6 +2,7 @@ import { ChevronRight, Clock, Gift } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 import { Link } from "react-router-dom";
 import { generateProductUrl } from "@/lib/slugify";
+import TakaSign from "@/components/TakaSign";
 
 const DealsSection = () => {
   const { data: products } = useProducts();
@@ -17,7 +18,7 @@ const DealsSection = () => {
             <h3 className="text-xl font-bold text-foreground">Bundle deals</h3>
             <Link to="/bundle-deals" className="flex items-center gap-1 text-sm bg-muted px-3 py-1.5 rounded-full font-medium hover:bg-muted/80 transition-colors">
               <Gift className="w-4 h-4 text-secondary" />
-              3 from US $2.99
+              3 from <TakaSign />249
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>

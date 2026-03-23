@@ -6,6 +6,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { useOrders } from "@/context/OrderContext";
 import { useSubmitReturn, useReturns } from "@/hooks/useReturns";
 import { toast } from "@/hooks/use-toast";
+import TakaSign from "@/components/TakaSign";
 
 const RETURN_REASONS = [
   "Defective / Damaged product",
@@ -187,9 +188,9 @@ const ReturnRequest = () => {
                       {isFullyReturned ? (
                         <span className="text-destructive font-medium">Already returned</span>
                       ) : availability && availability.returned > 0 ? (
-                        <>Qty: {maxAvailable} available ({availability.returned} returned) · ৳{parseFloat(item.price).toLocaleString()}</>
+                        <>Qty: {maxAvailable} available ({availability.returned} returned) · <TakaSign />{parseFloat(item.price).toLocaleString()}</>
                       ) : (
-                        <>Qty: {item.quantity} · ৳{parseFloat(item.price).toLocaleString()}</>
+                        <>Qty: {item.quantity} · <TakaSign />{parseFloat(item.price).toLocaleString()}</>
                       )}
                     </p>
                   </div>
