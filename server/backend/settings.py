@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "emails",
     "notifications",
     "promotions",
+    "chat",
 ]
 
 MIDDLEWARE = [
@@ -234,7 +235,7 @@ disable_throttling_in_debug = os.getenv('DISABLE_THROTTLING_IN_DEBUG', 'True') =
 
 if DEBUG and disable_throttling_in_debug:
     default_throttle_classes = []
-    default_throttle_rates = {}
+    default_throttle_rates = {'chat_messages': '1/s'}
 else:
     default_throttle_classes = [
         'rest_framework.throttling.AnonRateThrottle',
@@ -242,7 +243,8 @@ else:
     ]
     default_throttle_rates = {
         'anon': os.getenv('THROTTLE_ANON_RATE', '100/hour'),
-        'user': os.getenv('THROTTLE_USER_RATE', '1000/hour')
+        'user': os.getenv('THROTTLE_USER_RATE', '1000/hour'),
+        'chat_messages': '1/s',
     }
 
 REST_FRAMEWORK = {

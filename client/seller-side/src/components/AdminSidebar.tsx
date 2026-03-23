@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LogOut,
   Megaphone,
+  MessageCircle,
   Package,
   Settings,
   ShieldCheck,
@@ -52,6 +53,7 @@ const adminCommerceNav = [
   { title: "Banners", url: "/banners", icon: Image },
   { title: "Promotions", url: "/promotions", icon: Megaphone },
   { title: "Transactions", url: "/transactions", icon: CreditCard },
+  { title: "Live Chat", url: "/chat", icon: MessageCircle },
 ];
 
 const sellerMainNav = [

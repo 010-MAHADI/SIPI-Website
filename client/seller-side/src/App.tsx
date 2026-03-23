@@ -26,6 +26,7 @@ import SellerRequests from "./pages/SellerRequests";
 import ShopSelector from "./pages/ShopSelector";
 import CreateShop from "./pages/CreateShop";
 import Promotions from "./pages/Promotions";
+import ChatAdmin from "./pages/ChatAdmin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -105,6 +106,7 @@ const App = () => (
                 <Route path="/sellers/:id" element={<RoleRoute roles={["Admin"]}><SellerDetail /></RoleRoute>} />
                 <Route path="/seller-requests" element={<RoleRoute roles={["Admin"]}><SellerRequests /></RoleRoute>} />
                 <Route path="/banners" element={<RoleRoute roles={["Admin"]}><Banners /></RoleRoute>} />
+                <Route path="/chat" element={<RoleRoute roles={["Admin"]}><ChatAdmin /></RoleRoute>} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

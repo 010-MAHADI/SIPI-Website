@@ -34,6 +34,8 @@ import BundleDeals from "./pages/BundleDeals";
 import Returns from "./pages/Returns";
 import ReturnRequest from "./pages/ReturnRequest";
 import WriteReview from "./pages/WriteReview";
+import LiveChatPage from "./pages/LiveChatPage";
+import LiveChat from "./components/LiveChat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -80,8 +82,10 @@ const App = () => (
             <Route path="/returns" element={<Returns />} />
             <Route path="/return-request/:orderId" element={<ReturnRequest />} />
             <Route path="/write-review/:orderId/:itemId" element={<WriteReview />} />
+            <Route path="/live-chat" element={<LiveChatPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <LiveChat />
         </BrowserRouter>
       </OrderProvider>
       </CartProvider>
