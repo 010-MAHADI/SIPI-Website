@@ -117,6 +117,7 @@ class MessageListView(views.APIView):
 class AdminSessionListView(generics.ListAPIView):
     permission_classes = [permissions.IsAdminUser]
     serializer_class = ChatSessionSerializer
+    pagination_class = None  # Return all sessions as plain array
 
     def get_queryset(self):
         # Annotate with unread count for sorting

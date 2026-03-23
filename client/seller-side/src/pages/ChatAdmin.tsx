@@ -52,7 +52,9 @@ export default function ChatAdmin() {
   const fetchSessions = useCallback(async () => {
     try {
       const res = await api.get('/chat/admin/sessions/');
-      setSessions(res.data);
+      // Handle both paginated {results:[]} and plain array responses
+      const data = res.data;
+      setSessions(Array.isArray(data) ? data : (data.results ?? []));
     } catch (e) {
       console.error('Failed to fetch sessions', e);
     } finally {
