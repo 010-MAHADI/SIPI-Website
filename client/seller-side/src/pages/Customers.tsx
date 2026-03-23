@@ -10,10 +10,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import CustomerProfileModal from "@/components/CustomerProfileModal";
 
 export default function Customers() {
   const { data: customers = [], isLoading } = useCustomers();
   const [search, setSearch] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
 
   const filtered = useMemo(
     () =>
@@ -66,7 +68,10 @@ export default function Customers() {
               {filtered.map((customer) => (
                 <tr key={customer.id}>
                   <td className="pl-5">
-                    <div className="flex items-center gap-3">
+                    <div
+                      className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setSelectedCustomerId(customer.id)}
+                    >
                       <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary/10 to-accent flex items-center justify-center text-sm font-bold text-primary shrink-0">
                         {customer.name[0]?.toUpperCase() ?? "C"}
                       </div>
@@ -98,7 +103,7 @@ export default function Customers() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setSelectedCustomerId(customer.id)}>
                           <Eye className="h-4 w-4 mr-2" /> View Profile
                         </DropdownMenuItem>
                         <DropdownMenuItem>
@@ -123,6 +128,11 @@ export default function Customers() {
           </table>
         </div>
       )}
+
+      <CustomerProfileModal
+        customerId={selectedCustomerId}
+        onClose={() => setSelectedCustomerId(null)}
+      />
     </div>
   );
 }

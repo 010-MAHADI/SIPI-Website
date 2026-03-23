@@ -216,6 +216,103 @@ class CustomersAPIView(APIView):
         return Response(customers)
 
 
+class CustomerDetailAPIView(APIView):
+    permission_classes = [IsSellerOrAdmin]
+
+    def get(self, request, customer_id):
+        user = request.user
+        try:
+            customer = User.objects.get(id=customer_id)
+        except User.DoesNotExist:
+            return Response({"error": "Customer not found"}, status=404)
+
+        # Scope orders to seller if not admin
+        if is_admin_user(user):
+            orders_qs = Order.objects.filter(customer=customer).prefetch_related(
+                "items", "items__product", "return_requests"
+            ).order_by("-created_at")
+        else:
+            orders_qs = Order.objects.filter(
+                customer=customer, items__product__shop__seller=user
+            ).distinct().prefetch_related("items", "items__product", "return_requests").order_by("-created_at")
+
+        # Account stats
+        total_orders = orders_qs.count()
+        spent_expr = ExpressionWrapper(
+            F("items__price") * F("items__quantity"),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
+        total_spent = orders_qs.aggregate(total=Sum(spent_expr))["total"] or 0
+
+        cancelled_count = orders_qs.filter(status="cancelled").count()
+        delivered_count = orders_qs.filter(status="delivered").count()
+        return_count = sum(o.return_requests.count() for o in orders_qs)
+
+        # Last shipping address from most recent order
+        last_order = orders_qs.first()
+        last_address = None
+        if last_order:
+            last_address = {
+                "full_name": last_order.shipping_full_name,
+                "phone": last_order.shipping_phone,
+                "street": last_order.shipping_street,
+                "city": last_order.shipping_city,
+                "state": last_order.shipping_state,
+                "zip_code": last_order.shipping_zip_code,
+                "country": last_order.shipping_country,
+            }
+
+        # Recent orders (last 10)
+        recent_orders = []
+        for o in orders_qs[:10]:
+            items_preview = [
+                {
+                    "title": item.product_title,
+                    "quantity": item.quantity,
+                    "price": float(item.price),
+                }
+                for item in o.items.all()[:3]
+            ]
+            recent_orders.append({
+                "id": o.id,
+                "order_id": o.order_id,
+                "status": o.status,
+                "payment_method": o.payment_method,
+                "payment_status": o.payment_status,
+                "total_amount": float(o.total_amount),
+                "created_at": o.created_at.isoformat(),
+                "items_count": o.items.count(),
+                "items_preview": items_preview,
+            })
+
+        # Admin note (stored in a simple field we'll use from the customer's last order admin_note or a placeholder)
+        admin_note = getattr(customer, "admin_note", "") or ""
+
+        return Response({
+            "id": customer.id,
+            "username": customer.username,
+            "email": customer.email,
+            "first_name": customer.first_name,
+            "last_name": customer.last_name,
+            "phone": getattr(customer, "phone", "") or (last_address["phone"] if last_address else ""),
+            "date_joined": customer.date_joined.isoformat(),
+            "last_login": customer.last_login.isoformat() if customer.last_login else None,
+            "is_active": customer.is_active,
+            "status": "Active" if customer.is_active else "Blocked",
+            "admin_note": admin_note,
+            "last_address": last_address,
+            "stats": {
+                "total_orders": total_orders,
+                "total_spent": float(total_spent),
+                "delivered_count": delivered_count,
+                "cancelled_count": cancelled_count,
+                "return_refund_count": return_count,
+                "avg_order_value": round(float(total_spent) / total_orders, 2) if total_orders else 0,
+            },
+            "recent_orders": recent_orders,
+        })
+
+
 class AnalyticsAPIView(APIView):
     permission_classes = [IsSellerOrAdmin]
 
