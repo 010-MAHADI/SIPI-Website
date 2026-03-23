@@ -52,14 +52,14 @@ export const useProductsAdmin = (shopId?: string) => {
                     name: p.title || p.name || 'Untitled Product',
                     sku: p.sku || `SKU-${p.id}`,
                     category: p.category || p.shop_category || "Uncategorized",
-                    price: parseFloat(p.price) || 0,
+                    price: parseFloat(p.originalPrice ?? p.price) || 0,
                     stock: p.stock || 100, // Mocking stock as it doesn't exist in current models
                     status: p.status || "Active",
                     image: normalizeMediaUrl(p.image_url || p.image),
                     sold: p.sold_count || 0,
                     views: (p.reviews_count || 0) * 5,
                     rating: p.rating || 0,
-                    revenue: (parseFloat(p.price) || 0) * (p.sold_count || 0),
+                    revenue: (parseFloat(p.originalPrice ?? p.price) || 0) * (p.sold_count || 0),
                     trend: p.discount || 0
                 }));
             } catch (err) {

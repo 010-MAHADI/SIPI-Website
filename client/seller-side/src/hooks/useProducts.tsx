@@ -39,7 +39,8 @@ export const useProducts = () => {
                 return products.map((p: any) => ({
                     id: p.id,
                     title: p.title || p.name || 'Untitled Product',
-                    price: parseFloat(p.price) || 0,
+                    // Use originalPrice (discounted) as main price when available
+                    price: parseFloat(p.originalPrice ?? p.price) || 0,
                     image_url: normalizeMediaUrl(p.image_url || p.image) || '/placeholder.svg',
                     category: p.category || p.shop_category || "Uncategorized"
                 }));

@@ -254,7 +254,7 @@ export default function Categories() {
                   <p className="font-semibold text-sm text-foreground">{product.name}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-base font-bold text-primary">
-                      ${Number(product.price).toFixed(2)}
+                      ${Number(product.originalPrice ?? product.price).toFixed(2)}
                     </span>
                     <Badge variant="secondary" className="text-xs">
                       Sold {product.sold_count}
