@@ -283,6 +283,7 @@ class CustomerDetailAPIView(APIView):
                     "total": float(item.price * item.quantity),
                     "color": item.color or "",
                     "size": item.size or "",
+                    "shipping_type": item.shipping_type or "",
                     "shop_name": shop_name,
                     "product_slug": product_slug,
                     "category_slug": product_category_slug,

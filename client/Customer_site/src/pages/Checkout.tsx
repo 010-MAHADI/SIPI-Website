@@ -271,6 +271,7 @@ const Checkout = () => {
           quantity: item.quantity,
           color: item.color || '',
           size: item.size || '',
+          shipping_type: item.shippingType || '',
         })),
       };
 

@@ -100,6 +100,7 @@ class OrderItem(models.Model):
     # Variant information
     color = models.CharField(max_length=50, blank=True, null=True)
     size = models.CharField(max_length=50, blank=True, null=True)
+    shipping_type = models.CharField(max_length=100, blank=True, null=True)
     
     quantity = models.PositiveIntegerField(default=1)
     price = models.DecimalField(max_digits=10, decimal_places=2)

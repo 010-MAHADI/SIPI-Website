@@ -290,6 +290,20 @@ export default function CustomerProfileModal({ customerId, onClose }: Props) {
                               {(order as any).shipping.phone && (
                                 <p className="text-xs text-muted-foreground">{(order as any).shipping.phone}</p>
                               )}
+                              {/* Shipping types per item */}
+                              {(order as any).items?.some((i: any) => i.shipping_type) && (
+                                <div className="pt-1 space-y-0.5">
+                                  <p className="text-xs font-medium text-muted-foreground">Shipping Method:</p>
+                                  {(order as any).items
+                                    .filter((i: any) => i.shipping_type)
+                                    .map((i: any) => (
+                                      <p key={i.id} className="text-xs text-foreground">
+                                        <span className="text-muted-foreground">{i.title.length > 30 ? i.title.slice(0, 30) + "…" : i.title}:</span>{" "}
+                                        <span className="font-medium capitalize">{i.shipping_type}</span>
+                                      </p>
+                                    ))}
+                                </div>
+                              )}
                             </div>
                           )}
 

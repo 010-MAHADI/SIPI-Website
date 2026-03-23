@@ -11,6 +11,7 @@ export interface CustomerOrderItem {
   total: number;
   color: string;
   size: string;
+  shipping_type: string;
   shop_name: string;
   product_slug: string | null;
   category_slug: string | null;

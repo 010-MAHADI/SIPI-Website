@@ -18,7 +18,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'product_title', 'product_image', 'product_image_url', 'color', 'size', 'quantity', 'price', 'total_price', 'product_details']
+        fields = ['id', 'product', 'product_title', 'product_image', 'product_image_url', 'color', 'size', 'shipping_type', 'quantity', 'price', 'total_price', 'product_details']
         read_only_fields = ['id', 'total_price']
     
     def get_product_details(self, obj):
@@ -57,6 +57,7 @@ class OrderItemCreateSerializer(serializers.Serializer):
     quantity = serializers.IntegerField(min_value=1)
     color = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     size = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    shipping_type = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -259,6 +260,7 @@ class OrderCreateSerializer(serializers.Serializer):
                     'product_image': product.image.name if product.image else '',
                     'color': item_data.get('color', ''),
                     'size': item_data.get('size', ''),
+                    'shipping_type': item_data.get('shipping_type', ''),
                     'quantity': quantity,
                     'price': price,
                 })
