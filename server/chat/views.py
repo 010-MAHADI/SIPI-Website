@@ -26,18 +26,43 @@ class SessionView(views.APIView):
 
     def post(self, request):
         session_id = request.data.get('session_id')
-        
-        # Try to find existing active session
-        session = None
-        if request.user.is_authenticated:
-            session = ChatSession.objects.filter(user=request.user, status='active').first()
-        elif session_id:
-            session = ChatSession.objects.filter(session_id=session_id, status='active').first()
 
-        if not session:
-            # Create new session if no active one found
+        # For authenticated users: find their most recent session (any status)
+        if request.user.is_authenticated:
+            session = (
+                ChatSession.objects
+                .filter(user=request.user)
+                .order_by('-created_at')
+                .first()
+            )
+            if session:
+                # Reopen closed session instead of creating a duplicate
+                if session.status == 'closed':
+                    session.status = 'active'
+                    session.save(update_fields=['status'])
+                serializer = ChatSessionSerializer(session, context={'request': request})
+                return Response(serializer.data)
+            # No session at all — create one
+            session = ChatSession.objects.create(user=request.user)
+
+        else:
+            # Anonymous: find by session_id
+            if session_id:
+                session = (
+                    ChatSession.objects
+                    .filter(session_id=session_id)
+                    .order_by('-created_at')
+                    .first()
+                )
+                if session:
+                    if session.status == 'closed':
+                        session.status = 'active'
+                        session.save(update_fields=['status'])
+                    serializer = ChatSessionSerializer(session, context={'request': request})
+                    return Response(serializer.data)
+            # No existing session — create one
             session = ChatSession.objects.create(
-                user=request.user if request.user.is_authenticated else None,
+                user=None,
                 session_id=session_id
             )
 
@@ -104,12 +129,9 @@ class MessageListView(views.APIView):
             except ChatMessage.DoesNotExist:
                 queryset = list(queryset)
         else:
-            # Return last 20 messages initially
-            count = queryset.count()
-            if count > 20:
-                queryset = list(queryset)[-20:] 
-            else:
-                queryset = list(queryset)
+            # Return last 50 messages initially (enough for scroll-up history)
+            msgs = list(queryset)
+            queryset = msgs[-50:] if len(msgs) > 50 else msgs
 
         serializer = ChatMessageSerializer(queryset, many=True)
         return Response(serializer.data)
@@ -120,11 +142,35 @@ class AdminSessionListView(generics.ListAPIView):
     pagination_class = None  # Return all sessions as plain array
 
     def get_queryset(self):
-        # Annotate with unread count for sorting
-        return ChatSession.objects.annotate(
-            unread_count_admin=Count('messages', filter=Q(messages__sender_type='customer', messages__is_read=False)),
-            latest_msg_time=Max('messages__created_at')
-        ).order_by('-unread_count_admin', '-latest_msg_time', '-created_at')
+        # For authenticated users: show only their most recent session (no duplicates)
+        # For anonymous: show all (they have unique session_ids)
+        from django.db.models import Subquery, OuterRef
+
+        # Get the most recent session id per user (for logged-in users)
+        latest_per_user = (
+            ChatSession.objects
+            .filter(user=OuterRef('user'), user__isnull=False)
+            .order_by('-created_at')
+            .values('id')[:1]
+        )
+
+        return (
+            ChatSession.objects
+            .annotate(
+                unread_count_admin=Count('messages', filter=Q(messages__sender_type='customer', messages__is_read=False)),
+                latest_msg_time=Max('messages__created_at'),
+            )
+            .filter(
+                Q(user__isnull=True) |  # all anonymous sessions
+                Q(id__in=Subquery(
+                    ChatSession.objects
+                    .filter(user=OuterRef('user'), user__isnull=False)
+                    .order_by('-created_at')
+                    .values('id')[:1]
+                ))
+            )
+            .order_by('-unread_count_admin', '-latest_msg_time', '-created_at')
+        )
 
 class AdminAssignView(views.APIView):
     permission_classes = [permissions.IsAdminUser]

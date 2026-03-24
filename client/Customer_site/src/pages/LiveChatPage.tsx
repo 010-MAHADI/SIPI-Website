@@ -123,7 +123,26 @@ export default function LiveChatPage() {
         {/* Input bar */}
         <div className="fixed bottom-16 left-0 right-0 bg-card border-t border-border p-3 max-w-2xl mx-auto w-full">
           {session?.status === 'closed' ? (
-            <p className="text-center text-sm text-muted-foreground py-2">This chat session has ended.</p>
+            <div className="space-y-1.5">
+              <p className="text-center text-xs text-muted-foreground">Chat ended. Send a message to start a new conversation.</p>
+              <div className="flex items-end gap-2">
+                <textarea
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={handleKey}
+                  placeholder="Type to reopen chat..."
+                  rows={1}
+                  className="flex-1 resize-none bg-muted rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-1 focus:ring-primary max-h-28 overflow-y-auto"
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={!input.trim() || isSending}
+                  className="bg-primary text-primary-foreground rounded-xl p-2.5 hover:opacity-90 disabled:opacity-40 transition-opacity flex-shrink-0"
+                >
+                  {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="flex items-end gap-2">
               <textarea

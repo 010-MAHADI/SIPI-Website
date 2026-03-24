@@ -105,7 +105,10 @@ export function useChat(isAuthenticated: boolean) {
     }
     if (!s) return;
     await fetchMessages(s.id, null);
-    scheduleNextPoll(s.id);
+    // Only start polling if session is active
+    if (s.status === 'active') {
+      scheduleNextPoll(s.id);
+    }
     // mark admin messages as read
     api.post('/chat/read/', { session_id: s.id, sender_type: 'customer' }).catch(() => {});
   }, [session, initSession, fetchMessages, scheduleNextPoll]);
@@ -116,10 +119,21 @@ export function useChat(isAuthenticated: boolean) {
   }, []);
 
   const sendMessage = useCallback(async (content: string) => {
-    if (!session || !content.trim()) return;
+    if (!content.trim()) return;
+
+    // If session is closed, reopen it (backend will reuse same session)
+    let s = session;
+    if (!s || s.status === 'closed') {
+      s = await initSession();
+      if (!s) return;
+      // Fetch full history into the existing messages list
+      await fetchMessages(s.id, null);
+      scheduleNextPoll(s.id);
+    }
+
     const optimistic: ChatMessage = {
       id: Date.now(),
-      session: session.id,
+      session: s.id,
       sender_type: 'customer',
       content: content.trim(),
       is_read: false,
@@ -130,7 +144,7 @@ export function useChat(isAuthenticated: boolean) {
     setIsSending(true);
     try {
       const res = await api.post('/chat/message/', {
-        session: session.id,
+        session: s.id,
         sender_type: 'customer',
         content: content.trim(),
       });
@@ -142,7 +156,7 @@ export function useChat(isAuthenticated: boolean) {
     } finally {
       setIsSending(false);
     }
-  }, [session]);
+  }, [session, initSession, fetchMessages, scheduleNextPoll]);
 
   const endChat = useCallback(async () => {
     if (!session) return;
