@@ -11,6 +11,11 @@ export interface OrderItemApi {
     shipping_type?: string | null;
     quantity: number;
     price: number | string;
+    product_details?: {
+        variants?: {
+            shippingOptions?: Array<{ type: string; enabled: boolean; price?: number }>;
+        };
+    } | null;
 }
 
 export interface Order {

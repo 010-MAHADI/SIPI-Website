@@ -882,16 +882,24 @@ export default function Orders() {
           customer: o.customer_name || "Unknown",
           email: o.customer_email || "hidden@example.com",
           phone: o.shipping_phone || "-",
-          items: o.items.map((item, index) => ({
-            name: item.product_title || "Product Item",
-            sku: item.product ? `PID-${item.product}` : `ITEM-${index + 1}`,
-            qty: item.quantity || 1,
-            price: Number(item.price) || 0,
-            imageUrl: item.product_image_url || undefined,
-            shippingType: item.shipping_type || undefined,
-            color: item.color || undefined,
-            size: item.size || undefined,
-          })),
+          items: o.items.map((item, index) => {
+            // Fallback: if shipping_type not stored, read first enabled option from product variants
+            let shippingType = item.shipping_type || undefined;
+            if (!shippingType && item.product_details?.variants?.shippingOptions) {
+              const firstEnabled = item.product_details.variants.shippingOptions.find((opt: any) => opt.enabled);
+              if (firstEnabled) shippingType = firstEnabled.type;
+            }
+            return {
+              name: item.product_title || "Product Item",
+              sku: item.product ? `PID-${item.product}` : `ITEM-${index + 1}`,
+              qty: item.quantity || 1,
+              price: Number(item.price) || 0,
+              imageUrl: item.product_image_url || undefined,
+              shippingType,
+              color: item.color || undefined,
+              size: item.size || undefined,
+            };
+          }),
           amount: o.total || 0,
           subtotal: o.subtotal || 0,
           shippingCost: o.shipping_cost || 0,
