@@ -91,6 +91,7 @@ interface Order {
   notes?: string;
   trackingUpdates: TrackingUpdate[];
   deadlineDate: string;
+  createdAt: string;
   refunds?: RefundRecord[];
 }
 
@@ -166,52 +167,42 @@ function getTabFilter(tab: TabKey, order: Order, returnRequests?: any[]): boolea
   }
 }
 
-function CountdownTimer({ deadlineDate, status }: { deadlineDate: string; status: string }) {
-  const [timeLeft, setTimeLeft] = useState("");
-  const [isOverdue, setIsOverdue] = useState(false);
+function ElapsedTimer({ createdAt, status }: { createdAt: string; status: string }) {
+  const [elapsed, setElapsed] = useState("");
 
   useEffect(() => {
     if (status === "delivered" || status === "cancelled") {
-      setTimeLeft("");
+      setElapsed("");
       return;
     }
 
-    const update = () => {
-      const now = Date.now();
-      const deadline = new Date(deadlineDate + "T23:59:59").getTime();
-      const diff = deadline - now;
+    const start = new Date(createdAt).getTime();
+    if (isNaN(start)) return;
 
-      if (diff <= 0) {
-        setIsOverdue(true);
-        const overdue = Math.abs(diff);
-        const h = Math.floor(overdue / 3600000);
-        const m = Math.floor((overdue % 3600000) / 60000);
-        setTimeLeft(`Overdue ${h}h ${m}m`);
+    const update = () => {
+      const diff = Date.now() - start;
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      if (d > 0) {
+        setElapsed(`${d}d ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`);
       } else {
-        setIsOverdue(false);
-        const d = Math.floor(diff / 86400000);
-        const h = Math.floor((diff % 86400000) / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000) / 1000);
-        if (d > 0) {
-          setTimeLeft(`${d}d ${h}h ${m}m`);
-        } else {
-          setTimeLeft(`${h}h ${m}m ${s}s`);
-        }
+        setElapsed(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`);
       }
     };
 
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [deadlineDate, status]);
+  }, [createdAt, status]);
 
-  if (!timeLeft) return null;
+  if (!elapsed) return null;
 
   return (
-    <div className={`flex items-center gap-1.5 text-xs font-semibold ${isOverdue ? "text-destructive" : "text-primary"}`}>
+    <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
       <Timer className="h-3.5 w-3.5" />
-      <span>{timeLeft}</span>
+      <span>{elapsed}</span>
     </div>
   );
 }
@@ -921,6 +912,7 @@ export default function Orders() {
           },
           trackingUpdates: [],
           deadlineDate: "2026-12-31",
+          createdAt: o.createdAtIso || new Date().toISOString(),
         };
       }) as Order[];
       setOrders(mappedOrders);
@@ -2190,7 +2182,7 @@ export default function Orders() {
                   <FileText className="h-3.5 w-3.5" />
                 </button>
               </div>
-              <CountdownTimer deadlineDate={order.deadlineDate} status={order.status} />
+              <ElapsedTimer createdAt={order.createdAt} status={order.status} />
             </div>
 
             {/* Badges */}
@@ -2220,7 +2212,12 @@ export default function Orders() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">x {item.qty}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                      <span className="text-xs text-muted-foreground">x {item.qty}</span>
+                      {item.color && <span className="text-[10px] text-muted-foreground border border-border rounded px-1 py-0.5">{item.color}</span>}
+                      {item.size && <span className="text-[10px] text-muted-foreground border border-border rounded px-1 py-0.5">{item.size}</span>}
+                      {item.shippingType && <span className="text-[10px] text-primary border border-primary/30 rounded px-1 py-0.5 capitalize">{item.shippingType}</span>}
+                    </div>
                   </div>
                 </div>
               ))}

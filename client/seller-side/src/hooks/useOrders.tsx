@@ -30,6 +30,7 @@ export interface Order {
     shipping_zip_code?: string;
     shipping_country?: string;
     date: string;
+    createdAtIso: string;
     status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
     payment_status: string;
     subtotal?: number;
@@ -89,6 +90,7 @@ export const useOrders = (shopId?: string | number) => {
                         shipping_zip_code: order.shipping_zip_code || "",
                         shipping_country: order.shipping_country || "",
                         date: new Date(order.created_at).toLocaleDateString(),
+                        createdAtIso: order.created_at || new Date().toISOString(),
                         status: mapStatus(order.status),
                         payment_status: order.payment_status || "pending",
                         subtotal: parseFloat(order.subtotal) || 0,
