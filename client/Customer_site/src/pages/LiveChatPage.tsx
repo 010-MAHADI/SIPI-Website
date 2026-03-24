@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, KeyboardEvent } from 'react';
-import { ArrowLeft, Send, Loader2, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Send, Loader2, MessageCircle, PhoneOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useChat } from '@/hooks/useChat';
@@ -12,8 +12,9 @@ function formatTime(iso: string) {
 
 export default function LiveChatPage() {
   const { isLoggedIn } = useAuth();
-  const { session, messages, isLoading, isSending, openChat, sendMessage } = useChat(isLoggedIn);
+  const { session, messages, isLoading, isSending, openChat, sendMessage, endChat } = useChat(isLoggedIn);
   const [input, setInput] = useState('');
+  const [confirmEnd, setConfirmEnd] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -47,10 +48,37 @@ export default function LiveChatPage() {
           <button onClick={() => navigate(-1)} className="hover:opacity-70 transition-opacity">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1">
             <div className="w-2 h-2 bg-green-400 rounded-full" />
             <span className="font-semibold">Flypick Support</span>
           </div>
+          {session && session.status === 'active' && (
+            confirmEnd ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-primary-foreground/80">End chat?</span>
+                <button
+                  onClick={async () => { await endChat(); setConfirmEnd(false); }}
+                  className="text-xs bg-red-500 text-white px-2.5 py-1 rounded-full hover:bg-red-600 transition-colors"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => setConfirmEnd(false)}
+                  className="text-xs bg-white/20 px-2.5 py-1 rounded-full hover:bg-white/30 transition-colors"
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmEnd(true)}
+                className="hover:opacity-70 transition-opacity ml-auto"
+                title="End chat"
+              >
+                <PhoneOff className="w-5 h-5" />
+              </button>
+            )
+          )}
         </div>
 
         {/* Messages */}

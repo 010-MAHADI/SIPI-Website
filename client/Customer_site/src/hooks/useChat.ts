@@ -144,11 +144,22 @@ export function useChat(isAuthenticated: boolean) {
     }
   }, [session]);
 
+  const endChat = useCallback(async () => {
+    if (!session) return;
+    try {
+      const res = await api.post('/chat/close/', { session_id: session.id });
+      setSession(res.data);
+    } catch (e) {
+      console.error('End chat failed', e);
+    }
+    if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+  }, [session]);
+
   useEffect(() => {
     return () => {
       if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
     };
   }, []);
 
-  return { session, messages, isOpen, isLoading, isSending, openChat, closeChat, sendMessage };
+  return { session, messages, isOpen, isLoading, isSending, openChat, closeChat, sendMessage, endChat };
 }

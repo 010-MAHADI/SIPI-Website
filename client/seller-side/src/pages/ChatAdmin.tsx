@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, KeyboardEvent } from 'react';
-import { MessageCircle, Send, Loader2, User, RefreshCw, CheckCheck } from 'lucide-react';
+import { MessageCircle, Send, Loader2, User, RefreshCw, CheckCheck, PhoneOff } from 'lucide-react';
 import api from '@/lib/api';
+import CustomerProfileModal from '@/components/CustomerProfileModal';
 
 interface ChatMessage {
   id: number;
@@ -44,6 +45,8 @@ export default function ChatAdmin() {
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [loadingSessions, setLoadingSessions] = useState(true);
+  const [profileCustomerId, setProfileCustomerId] = useState<number | null>(null);
+  const [confirmEnd, setConfirmEnd] = useState(false);
   const lastIdRef = useRef<number | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
@@ -98,6 +101,7 @@ export default function ChatAdmin() {
     if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
     setActiveSession(session);
     setMessages([]);
+    setConfirmEnd(false);
     lastIdRef.current = null;
     await fetchMessages(session.id, null);
     scheduleNextPoll(session.id);
@@ -145,6 +149,18 @@ export default function ChatAdmin() {
     } catch (e) {
       console.error('Assign failed', e);
     }
+  }, [activeSession]);
+
+  const endChat = useCallback(async () => {
+    if (!activeSession) return;
+    try {
+      const res = await api.post('/chat/close/', { session_id: activeSession.id });
+      setActiveSession(res.data);
+      setSessions(prev => prev.map(s => s.id === activeSession.id ? { ...s, status: 'closed' } : s));
+    } catch (e) {
+      console.error('End chat failed', e);
+    }
+    setConfirmEnd(false);
   }, [activeSession]);
 
   useEffect(() => {
@@ -241,7 +257,13 @@ export default function ChatAdmin() {
                   <User className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">{activeSession.customer_name}</p>
+                  <button
+                    className="text-sm font-semibold hover:underline text-left"
+                    onClick={() => activeSession.user && setProfileCustomerId(activeSession.user)}
+                    title={activeSession.user ? "View customer profile" : undefined}
+                  >
+                    {activeSession.customer_name}
+                  </button>
                   <p className="text-xs text-muted-foreground">
                     {activeSession.assigned_admin_name ? `Assigned to: ${activeSession.assigned_admin_name}` : 'Unassigned'}
                   </p>
@@ -255,6 +277,33 @@ export default function ChatAdmin() {
                   <button onClick={assignSelf} className="text-xs bg-primary text-primary-foreground px-3 py-1 rounded-full hover:opacity-90 transition-opacity">
                     Assign to me
                   </button>
+                )}
+                {activeSession.status === 'active' && (
+                  confirmEnd ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-muted-foreground">End chat?</span>
+                      <button
+                        onClick={endChat}
+                        className="text-xs bg-red-500 text-white px-2.5 py-1 rounded-full hover:bg-red-600 transition-colors"
+                      >
+                        Yes
+                      </button>
+                      <button
+                        onClick={() => setConfirmEnd(false)}
+                        className="text-xs border px-2.5 py-1 rounded-full hover:bg-muted transition-colors"
+                      >
+                        No
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmEnd(true)}
+                      className="flex items-center gap-1 text-xs text-destructive border border-destructive/30 px-2.5 py-1 rounded-full hover:bg-destructive/10 transition-colors"
+                      title="End chat"
+                    >
+                      <PhoneOff className="w-3.5 h-3.5" /> End Chat
+                    </button>
+                  )
                 )}
               </div>
             </div>
@@ -310,6 +359,11 @@ export default function ChatAdmin() {
           </>
         )}
       </div>
+
+      <CustomerProfileModal
+        customerId={profileCustomerId}
+        onClose={() => setProfileCustomerId(null)}
+      />
     </div>
   );
 }

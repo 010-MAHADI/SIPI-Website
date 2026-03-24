@@ -164,3 +164,32 @@ class MarkReadView(views.APIView):
             session.messages.filter(sender_type='customer', is_read=False).update(is_read=True)
 
         return Response({'success': True})
+
+
+class CloseSessionView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        session_id = request.data.get('session_id')
+        if not session_id:
+            return Response({'error': 'session_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            session = ChatSession.objects.get(pk=session_id)
+        except ChatSession.DoesNotExist:
+            return Response({'error': 'Session not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Admins can always close; customers can only close their own session
+        if request.user.is_authenticated and request.user.is_staff:
+            pass  # admin — allowed
+        elif session.user and request.user.is_authenticated and session.user == request.user:
+            pass  # owner — allowed
+        elif not session.user:
+            pass  # anonymous session — allowed
+        else:
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+
+        session.status = 'closed'
+        session.save(update_fields=['status'])
+        serializer = ChatSessionSerializer(session)
+        return Response(serializer.data)
