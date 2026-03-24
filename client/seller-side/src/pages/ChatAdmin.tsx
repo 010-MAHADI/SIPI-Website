@@ -187,7 +187,7 @@ export default function ChatAdmin() {
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-background border border-border rounded-lg overflow-hidden">
       {/* Session list */}
-      <div className="w-72 border-r border-border flex flex-col flex-shrink-0">
+      <div className="w-56 border-r border-border flex flex-col flex-shrink-0">
         <div className="p-3 border-b border-border flex items-center justify-between">
           <h2 className="font-semibold text-sm">Live Chats</h2>
           <button onClick={fetchSessions} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -210,27 +210,26 @@ export default function ChatAdmin() {
             <button
               key={s.id}
               onClick={() => openSession(s)}
-              className={`w-full text-left px-3 py-3 border-b border-border hover:bg-muted/50 transition-colors ${activeSession?.id === s.id ? 'bg-muted' : ''}`}
+              className={`w-full text-left px-3 py-2.5 border-b border-border hover:bg-muted/50 transition-colors ${activeSession?.id === s.id ? 'bg-muted' : ''}`}
             >
-              <div className="flex items-start gap-2">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <User className="w-4 h-4 text-primary" />
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <User className="w-3.5 h-3.5 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
-                    <span className="text-sm font-medium truncate">{s.customer_name}</span>
-                    <span className="text-[10px] text-muted-foreground flex-shrink-0">{formatTime(s.last_message_at)}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">{s.last_message_preview || 'No messages yet'}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${s.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'}`}>
-                      {s.status}
-                    </span>
+                    <span className="text-xs font-medium truncate">{s.customer_name}</span>
                     {s.unread_count > 0 && (
-                      <span className="ml-auto bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                      <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">
                         {s.unread_count}
                       </span>
                     )}
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${s.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground border border-border'}`}>
+                      {s.status}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground flex-shrink-0 ml-auto">{formatTime(s.last_message_at)}</span>
                   </div>
                 </div>
               </div>
@@ -329,13 +328,24 @@ export default function ChatAdmin() {
                   </div>
                 </div>
               ))}
+              {activeSession.status === 'closed' && (
+                <div className="flex justify-center pt-2">
+                  <div className="flex items-center gap-2 bg-muted border border-border rounded-full px-4 py-1.5 text-xs text-muted-foreground">
+                    <PhoneOff className="w-3 h-3 shrink-0" />
+                    This conversation has ended. No further messages can be sent.
+                  </div>
+                </div>
+              )}
               <div ref={bottomRef} />
             </div>
 
             {/* Input */}
             <div className="border-t border-border p-3 flex-shrink-0">
               {activeSession.status === 'closed' ? (
-                <p className="text-center text-sm text-muted-foreground py-2">This session is closed.</p>
+                <div className="flex items-center justify-center gap-2 py-1.5 text-sm text-muted-foreground select-none">
+                  <PhoneOff className="w-4 h-4" />
+                  Chat ended — messaging is disabled.
+                </div>
               ) : (
                 <div className="flex items-end gap-2">
                   <textarea

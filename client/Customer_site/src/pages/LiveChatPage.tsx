@@ -109,6 +109,14 @@ export default function LiveChatPage() {
               </div>
             </div>
           ))}
+          {session?.status === 'closed' && (
+            <div className="flex justify-center pt-2">
+              <div className="flex items-center gap-2 bg-muted border border-border rounded-full px-4 py-2 text-xs text-muted-foreground">
+                <PhoneOff className="w-3.5 h-3.5 shrink-0" />
+                This chat has ended. Start a new chat to get help.
+              </div>
+            </div>
+          )}
           <div ref={bottomRef} />
         </div>
 

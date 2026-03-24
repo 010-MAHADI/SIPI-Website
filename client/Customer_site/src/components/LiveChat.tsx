@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, KeyboardEvent } from 'react';
-import { MessageCircle, X, Send, Loader2, ChevronDown, PhoneOff } from 'lucide-react';
+import { MessageCircle, Send, Loader2, ChevronDown, PhoneOff } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useChat } from '@/hooks/useChat';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -131,6 +131,14 @@ export default function LiveChat() {
                 </div>
               </div>
             ))}
+            {session?.status === 'closed' && (
+              <div className="flex justify-center pt-1">
+                <div className="flex items-center gap-1.5 bg-muted border border-border rounded-full px-3 py-1 text-[11px] text-muted-foreground">
+                  <PhoneOff className="w-3 h-3 shrink-0" />
+                  This chat has ended. Start a new chat to get help.
+                </div>
+              </div>
+            )}
             <div ref={bottomRef} />
           </div>
 

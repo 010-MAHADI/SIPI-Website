@@ -33,7 +33,7 @@ class ChatSessionSerializer(serializers.ModelSerializer):
     def get_customer_name(self, obj):
         if obj.user:
             name = f"{obj.user.first_name} {obj.user.last_name}".strip()
-            return name if name else obj.user.email
+            return name if name else (obj.user.username or obj.user.email)
         return "Anonymous Guest"
         
     def get_assigned_admin_name(self, obj):
