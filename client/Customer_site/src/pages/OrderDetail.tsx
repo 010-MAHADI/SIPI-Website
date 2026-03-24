@@ -255,7 +255,32 @@ const OrderDetail = () => {
 
             <div className="bg-muted/50 border border-border rounded-xl p-4 text-center">
               <p className="text-xs text-muted-foreground">Estimated Delivery</p>
-              <p className="text-sm font-bold mt-1">7 - 15 Business Days</p>
+              {(() => {
+                // Collect estimated delivery ranges from each item's shipping option
+                const deliveries = order.items.map((item) => {
+                  const st = item.shipping_type;
+                  const opts: any[] = item.product_details?.variants?.shippingOptions || [];
+                  const match = st
+                    ? opts.find((o) => o.enabled && o.type?.toLowerCase() === st.toLowerCase())
+                    : opts.find((o) => o.enabled);
+                  return match?.estimatedDelivery || null;
+                }).filter(Boolean);
+
+                if (deliveries.length === 0) {
+                  return <p className="text-sm font-bold mt-1">Contact seller for details</p>;
+                }
+
+                // Parse "min-max" or single number strings, find overall range
+                let minDays = Infinity, maxDays = 0;
+                deliveries.forEach((d: string) => {
+                  const parts = d.split("-").map((p: string) => parseInt(p.trim(), 10)).filter((n: number) => !isNaN(n));
+                  if (parts.length === 1) { minDays = Math.min(minDays, parts[0]); maxDays = Math.max(maxDays, parts[0]); }
+                  if (parts.length >= 2) { minDays = Math.min(minDays, parts[0]); maxDays = Math.max(maxDays, parts[1]); }
+                });
+
+                const label = minDays === maxDays ? `${minDays} Business Days` : `${minDays} - ${maxDays} Business Days`;
+                return <p className="text-sm font-bold mt-1">{label}</p>;
+              })()}
             </div>
           </div>
         </div>
