@@ -172,7 +172,17 @@ const OrderDetail = () => {
                       <div className="flex gap-2 mt-0.5">
                         {item.color && <span className="text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">{item.color}</span>}
                         {item.size && <span className="text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">{item.size}</span>}
-                        {item.shipping_type && <span className="text-[10px] text-primary border border-primary/30 rounded px-1.5 py-0.5 capitalize">{item.shipping_type}</span>}
+                        {(() => {
+                          // Use stored shipping_type, or fall back to first enabled option from product variants
+                          const st = item.shipping_type;
+                          if (st) return <span className="text-[10px] text-primary border border-primary/30 rounded px-1.5 py-0.5 capitalize">{st}</span>;
+                          const opts = item.product_details?.variants?.shippingOptions;
+                          if (opts?.length) {
+                            const enabled = opts.find((o: any) => o.enabled);
+                            if (enabled) return <span className="text-[10px] text-primary border border-primary/30 rounded px-1.5 py-0.5 capitalize">{enabled.type}</span>;
+                          }
+                          return null;
+                        })()}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">Qty: {item.quantity}</p>
                       {(order.status === "delivered" || order.status === "shipped") && (

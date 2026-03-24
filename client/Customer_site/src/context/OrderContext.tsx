@@ -10,6 +10,7 @@ export interface OrderItem {
   product_image_url?: string;
   color?: string;
   size?: string;
+  shipping_type?: string;
   quantity: number;
   price: string;
   total_price: string;

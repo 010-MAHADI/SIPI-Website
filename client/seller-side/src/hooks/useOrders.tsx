@@ -8,6 +8,7 @@ export interface OrderItemApi {
     product_image_url?: string | null;
     color?: string | null;
     size?: string | null;
+    shipping_type?: string | null;
     quantity: number;
     price: number | string;
 }
