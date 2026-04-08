@@ -9,18 +9,18 @@ copy "client\Customer_site\.env.production" "client\Customer_site\.env" >nul
 
 REM Create seller-side production env if it doesn't exist
 echo # Production Environment Variables for Seller Dashboard > "client\seller-side\.env"
-echo VITE_API_BASE_URL=http://52.221.195.134/api >> "client\seller-side\.env"
-echo VITE_MEDIA_URL=http://52.221.195.134/media >> "client\seller-side\.env"
+echo VITE_API_BASE_URL=http://54.169.101.239/api >> "client\seller-side\.env"
+echo VITE_MEDIA_URL=http://54.169.101.239/media >> "client\seller-side\.env"
 echo VITE_SITE_NAME=Flypick >> "client\seller-side\.env"
-echo VITE_CUSTOMER_URL=http://52.221.195.134 >> "client\seller-side\.env"
+echo VITE_CUSTOMER_URL=http://54.169.101.239 >> "client\seller-side\.env"
 
 echo.
 echo ✅ Production environment configured!
 echo.
 echo Production URLs:
-echo - Customer Site: http://52.221.195.134 (port 80)
-echo - Seller Dashboard: http://52.221.195.134:8080 (port 8080)
-echo - API Server: http://52.221.195.134/api (Django backend)
+echo - Customer Site: http://54.169.101.239 (port 80)
+echo - Seller Dashboard: http://54.169.101.239:8080 (port 8080)
+echo - API Server: http://54.169.101.239/api (Django backend)
 echo.
 echo Configuration Details:
 echo - DEBUG=False (Production mode)

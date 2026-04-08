@@ -6,7 +6,7 @@ Check for ESP32 products and their ratings
 import requests
 import json
 
-BASE_URL = "http://52.221.195.134"
+BASE_URL = "http://54.169.101.239"
 
 def check_esp32_products():
     print("🔍 Checking ESP32 Products")

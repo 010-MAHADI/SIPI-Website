@@ -39,8 +39,8 @@ export interface Product {
     };
 }
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://52.221.195.134/api/';
-const mediaBaseUrl = import.meta.env.VITE_MEDIA_URL || 'http://52.221.195.134/media';
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://54.169.101.239/api/';
+const mediaBaseUrl = import.meta.env.VITE_MEDIA_URL || 'http://54.169.101.239/media';
 
 const normalizeImageUrl = (image: string | null | undefined): string => {
     if (!image) return '/placeholder.svg';

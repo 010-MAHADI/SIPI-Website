@@ -45,8 +45,8 @@ const STATUS_COLORS: Record<string, string> = {
   refunded: "bg-purple-100 text-purple-800",
 };
 
-const CUSTOMER_SITE = import.meta.env.VITE_CUSTOMER_URL || "http://52.221.195.134";
-const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || "http://52.221.195.134/media";
+const CUSTOMER_SITE = import.meta.env.VITE_CUSTOMER_URL || "http://54.169.101.239";
+const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || "http://54.169.101.239/media";
 
 function fmt(date: string) {
   return new Date(date).toLocaleDateString("en-US", {

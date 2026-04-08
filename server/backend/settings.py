@@ -35,7 +35,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-%4^c-r!d$pf*q^8^e2u4xa0m68
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '52.221.195.134').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '54.169.101.239').split(',')
 
 
 # Application definition
@@ -190,15 +190,15 @@ if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOWED_ORIGINS = os.getenv(
         'CORS_ALLOWED_ORIGINS',
-        'http://52.221.195.134,http://52.221.195.134:8080'
+        'http://54.169.101.239,http://54.169.101.239:8080'
     ).split(',')
 else:
     # Production: Use environment variable only
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOWED_ORIGINS = os.getenv(
         'CORS_ALLOWED_ORIGINS',
-        'http://52.221.195.134,http://52.221.195.134:8080'
-    ).split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else ['http://52.221.195.134', 'http://52.221.195.134:8080']
+        'http://54.169.101.239,http://54.169.101.239:8080'
+    ).split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else ['http://54.169.101.239', 'http://54.169.101.239:8080']
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -299,8 +299,8 @@ EMAIL_SENDER_NAME = os.getenv('EMAIL_SENDER_NAME', 'Flypick')
 
 # Site Configuration
 SITE_NAME = os.getenv('SITE_NAME', 'Flypick')
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://52.221.195.134')
-SELLER_FRONTEND_URL = os.getenv('SELLER_FRONTEND_URL', 'http://52.221.195.134:8080')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://54.169.101.239')
+SELLER_FRONTEND_URL = os.getenv('SELLER_FRONTEND_URL', 'http://54.169.101.239:8080')
 SOCIAL_AUTH_FRONTEND_URL = os.getenv('SOCIAL_AUTH_FRONTEND_URL', FRONTEND_URL)
 BACKEND_PUBLIC_URL = os.getenv('BACKEND_PUBLIC_URL', FRONTEND_URL)
 

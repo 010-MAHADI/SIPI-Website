@@ -1,7 +1,7 @@
 # Manual Production Deployment Guide
 
 ## Server Information
-- **Server IP**: 52.221.195.134
+- **Server IP**: 54.169.101.239
 - **Customer Domain**: flypick.shop
 - **Seller Domain**: seller.flypick.shop
 
@@ -105,7 +105,7 @@ nano .env
 # Django Settings
 SECRET_KEY=your-new-production-secret-key-generate-a-long-random-string
 DEBUG=False
-ALLOWED_HOSTS=52.221.195.134,flypick.shop,seller.flypick.shop,www.flypick.shop
+ALLOWED_HOSTS=54.169.101.239,flypick.shop,seller.flypick.shop,www.flypick.shop
 
 # Database
 USE_SQLITE=False
@@ -179,7 +179,7 @@ python manage.py collectstatic --noinput
 python manage.py runserver 0.0.0.0:8000
 
 # Open another terminal and test
-curl http://52.221.195.134:8000/api/health/
+curl http://54.169.101.239:8000/api/health/
 
 # Stop the test server (Ctrl+C)
 ```

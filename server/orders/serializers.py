@@ -442,7 +442,7 @@ class OrderCreateSerializer(serializers.Serializer):
                 },
                 'payment_method': order.payment_method,
                 'estimated_delivery': '3-5 business days',
-                'tracking_url': f"{getattr(settings, 'FRONTEND_URL', 'http://52.221.195.134')}/orders/{order.order_id}",
+                'tracking_url': f"{getattr(settings, 'FRONTEND_URL', 'http://54.169.101.239')}/orders/{order.order_id}",
                 'site_name': getattr(settings, 'SITE_NAME', 'Flypick'),
                 'current_year': timezone.now().year,
             }
@@ -516,7 +516,7 @@ class OrderCreateSerializer(serializers.Serializer):
                         'country': order.shipping_country,
                     },
                     'payment_method': order.payment_method,
-                    'dashboard_url': f"{getattr(settings, 'SELLER_FRONTEND_URL', 'http://52.221.195.134:8080')}/orders",
+                    'dashboard_url': f"{getattr(settings, 'SELLER_FRONTEND_URL', 'http://54.169.101.239:8080')}/orders",
                     'site_name': getattr(settings, 'SITE_NAME', 'Flypick'),
                     'current_year': timezone.now().year,
                 }

@@ -1,6 +1,6 @@
 // API utility functions with environment-based configuration
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://52.221.195.134/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://54.169.101.239/api';
 
 export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;

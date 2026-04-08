@@ -187,7 +187,7 @@ class NotificationService:
         context = {
             'user_name': user.first_name or user.username,
             'user_email': user.email,
-            'login_url': f"{getattr(settings, 'FRONTEND_URL', 'http://52.221.195.134')}/login",
+            'login_url': f"{getattr(settings, 'FRONTEND_URL', 'http://54.169.101.239')}/login",
             'site_name': getattr(settings, 'SITE_NAME', 'Flypick / Boibazar'),
             'current_year': timezone.now().year,
         }
@@ -262,7 +262,7 @@ class NotificationService:
             },
             'payment_method': order.payment_method,
             'estimated_delivery': '3-5 business days',
-            'tracking_url': f"{getattr(settings, 'FRONTEND_URL', 'http://52.221.195.134')}/orders/{order.order_id}",
+            'tracking_url': f"{getattr(settings, 'FRONTEND_URL', 'http://54.169.101.239')}/orders/{order.order_id}",
             'site_name': getattr(settings, 'SITE_NAME', 'Flypick / Boibazar'),
             'current_year': timezone.now().year,
         }
@@ -296,7 +296,7 @@ class NotificationService:
             'new_status': order.status.title(),
             'status_message': status_messages.get(order.status, 'Your order status has been updated.'),
             'order_date': order.created_at.strftime('%B %d, %Y'),
-            'tracking_url': f"{getattr(settings, 'FRONTEND_URL', 'http://52.221.195.134')}/orders/{order.order_id}",
+            'tracking_url': f"{getattr(settings, 'FRONTEND_URL', 'http://54.169.101.239')}/orders/{order.order_id}",
             'site_name': getattr(settings, 'SITE_NAME', 'Flypick / Boibazar'),
             'current_year': timezone.now().year,
         }
@@ -347,7 +347,7 @@ class NotificationService:
                     'country': order.shipping_country,
                 },
                 'payment_method': order.payment_method,
-                'dashboard_url': f"{getattr(settings, 'SELLER_FRONTEND_URL', 'http://52.221.195.134:8080')}/orders",
+                'dashboard_url': f"{getattr(settings, 'SELLER_FRONTEND_URL', 'http://54.169.101.239:8080')}/orders",
                 'site_name': getattr(settings, 'SITE_NAME', 'Flypick / Boibazar'),
                 'current_year': timezone.now().year,
             }
@@ -385,8 +385,8 @@ class NotificationService:
             'product_sku': product.sku,
             'current_stock': product.stock,
             'threshold': threshold,
-            'product_url': f"{getattr(settings, 'SELLER_FRONTEND_URL', 'http://52.221.195.134:8080')}/products/{product.id}",
-            'dashboard_url': f"{getattr(settings, 'SELLER_FRONTEND_URL', 'http://52.221.195.134:8080')}/products",
+            'product_url': f"{getattr(settings, 'SELLER_FRONTEND_URL', 'http://54.169.101.239:8080')}/products/{product.id}",
+            'dashboard_url': f"{getattr(settings, 'SELLER_FRONTEND_URL', 'http://54.169.101.239:8080')}/products",
             'site_name': getattr(settings, 'SITE_NAME', 'Flypick / Boibazar'),
             'current_year': timezone.now().year,
         }
